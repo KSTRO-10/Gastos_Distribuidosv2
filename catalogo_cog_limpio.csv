@@ -1,0 +1,53 @@
+codigo,descripcion
+1000,SERVICIOS PERSONALES
+1100,REMUNERACIONES AL PERSONAL DE CARACTER PERMANENTE
+111,Dietas
+112,Haberes
+113,Sueldos base al personal permanente
+1200,REMUNERACIONES AL PERSONAL DE CARACTER TRANSITORIO
+121,Honorarios asimilables a salarios
+122,Sueldos base al personal eventual
+2000,MATERIALES Y SUMINISTROS
+2100,MATERIALES DE ADMINISTRACION EMISION DE DOCUMENTOS Y ARTICULOS OFICIALES
+211,Materiales utiles y equipos menores de oficina
+212,Materiales y utiles de impresion y reproduccion
+214,Materiales utiles y equipos menores de tecnologias de la informacion y comunicaciones
+215,Material impreso e informacion digital
+216,Material de limpieza
+2200,ALIMENTOS Y UTENSILIOS
+221,Productos alimenticios para personas
+223,Utensilios para el servicio de alimentacion
+2400,MATERIALES Y ARTICULOS DE CONSTRUCCION Y DE REPARACION
+246,Material electrico y electronico
+248,Materiales complementarios
+2600,COMBUSTIBLES LUBRICANTES Y ADITIVOS
+261,Combustibles lubricantes y aditivos
+3000,SERVICIOS GENERALES
+3100,SERVICIOS BASICOS
+311,Energia electrica
+313,Agua
+314,Telefonia tradicional
+315,Telefonia celular
+317,Servicios de acceso de Internet redes y procesamiento de informacion
+318,Servicios postales y telegraficos
+3200,SERVICIOS DE ARRENDAMIENTO
+322,Arrendamiento de edificios
+323,Arrendamiento de mobiliario y equipo de administracion
+3300,SERVICIOS PROFESIONALES CIENTIFICOS TECNICOS Y OTROS SERVICIOS
+331,Servicios legales de contabilidad auditoria y relacionados
+333,Servicios de consultoria administrativa procesos tecnica y en tecnologias de la informacion
+336,Servicios de apoyo administrativo traduccion fotocopiado e impresion
+3400,SERVICIOS FINANCIEROS BANCARIOS Y COMERCIALES
+341,Servicios financieros y bancarios
+345,Seguro de bienes patrimoniales
+3500,SERVICIOS DE INSTALACION REPARACION MANTENIMIENTO Y CONSERVACION
+351,Conservacion y mantenimiento menor de inmuebles
+353,Instalacion reparacion y mantenimiento de equipo de computo y tecnologia de la informacion
+355,Reparacion y mantenimiento de equipo de transporte
+3700,SERVICIOS DE TRASLADO Y VIATICOS
+371,Pasajes aereos
+372,Pasajes terrestres
+375,Viaticos en el pais
+3900,OTROS SERVICIOS GENERALES
+392,Impuestos y derechos
+398,Impuesto sobre nominas y otros que se deriven de una relacion laboral

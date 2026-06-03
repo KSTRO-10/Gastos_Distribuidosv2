@@ -1,0 +1,97 @@
+{% extends "documents/_base_documento.html" %}
+
+{% block area_administrativa %}
+    ADQUISICIONES
+{% endblock %}
+
+{% block asunto %}
+    ORDEN DE COMPRA: {{ orden.numero }}
+{% endblock %}
+
+{% block lugar_fecha %}
+    {{ lugar }}, a {{ orden.fecha_emision|date:'d/m/Y' }}
+{% endblock %}
+
+{% block destinatario_izq %}
+    <div class="nombre-destinatario">{{ orden.proveedor.razon_social|upper }}</div>
+    <div>PRESENTE.</div>
+{% endblock %}
+
+{% block folio_doc %}No. {{ orden.numero }}{% endblock %}
+
+{% block destinatario_der %}
+    <div><strong>FECHA ENTREGA ESPERADA:</strong></div>
+    <div>
+        {% if orden.fecha_entrega_esperada %}
+            {{ orden.fecha_entrega_esperada|date:'d/m/Y' }}
+        {% else %}
+            —
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block cuerpo %}
+    <p class="oficio-texto">
+        Por este conducto y con base a su cotización de fecha
+        {{ orden.cotizacion.fecha|date:'d/m/Y' }}, le solicito nos suministre los
+        siguientes materiales, bienes y/o servicios.
+    </p>
+{% endblock %}
+
+{% block tabla_datos %}
+    <table class="datos-table">
+        <thead>
+            <tr>
+                <th style="width: 15%;">CANTIDAD</th>
+                <th style="width: 20%;">UNIDAD DE MEDIDA</th>
+                <th style="width: 65%;">CONCEPTO</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in detalles %}
+                <tr>
+                    <td class="center">{{ detalle.cantidad }}</td>
+                    <td class="center">{{ detalle.unidad }}</td>
+                    <td>{{ detalle.concepto }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" class="center">No hay partidas en esta orden.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block pie_contenido %}
+    <p class="oficio-texto" style="margin-top: 20px;">
+        Dichos materiales deberán ser entregados en la Oficina de Adquisiciones de Bienes
+        y Servicios del H. Ayuntamiento Municipal de {{ company.municipio }} en un horario
+        de 8:00 AM a 3:00 PM. Y los servicios en el lugar y hora acordados.
+    </p>
+
+    {% if orden.notas %}
+    <p class="oficio-texto" style="margin-top: 10px;">
+        <strong>Observaciones:</strong> {{ orden.notas }}
+    </p>
+    {% endif %}
+{% endblock %}
+
+{% block firmas %}
+<div class="firmas-container">
+    <div class="firmas-row">
+        <div class="firma-bloque">
+            <div style="height: 80px;"></div>
+            <div class="firma-linea"></div>
+            <div class="firma-nombre">{{ firmantes.0.nombre_completo|upper }}</div>
+            <div class="firma-cargo">{{ firmantes.0.cargo|upper }}</div>
+        </div>
+        <div class="firma-bloque">
+            <div style="height: 80px;"></div>
+            <div class="firma-linea"></div>
+            <div class="firma-nombre">{{ firmantes.1.nombre_completo|upper }}</div>
+            <div class="firma-cargo">{{ firmantes.1.cargo|upper }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

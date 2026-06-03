@@ -1,0 +1,6 @@
+export { default as ProveedorDashboardPage } from './ProveedorDashboardPage'
+export { default as SolicitudesCotizarPage } from './SolicitudesCotizarPage'
+export { default as NuevaCotizacionPage } from './NuevaCotizacionPage'
+export { default as MisCotizacionesPage } from './MisCotizacionesPage'
+export { default as MisOrdenesPage } from './MisOrdenesPage'
+export { default as MisFacturasPage } from './MisFacturasPage'

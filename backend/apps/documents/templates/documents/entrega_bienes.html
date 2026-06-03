@@ -1,0 +1,219 @@
+{% extends "documents/_base_documento.html" %}
+
+{% block area_administrativa %}
+    ALMACÉN MUNICIPAL
+{% endblock %}
+
+{% block asunto %}
+    ACTA DE ENTREGA-RECEPCIÓN DE BIENES
+{% endblock %}
+
+{% block lugar_fecha %}
+    {{ lugar }}, {{ entrega.fecha_entrega|date:'j \d\e F \d\e Y'|upper }}
+{% endblock %}
+
+{% block destinatario_izq %}
+    <div class="nombre-destinatario">{{ entrega.recibido_por.get_full_name|upper }}</div>
+    <div>ALMACENISTA MUNICIPAL</div>
+    <div>PRESENTE</div>
+{% endblock %}
+
+{% block destinatario_der %}
+    <div><strong>FOLIO:</strong> {{ entrega.numero }}</div>
+    <div><strong>FECHA DE RECEPCIÓN:</strong> {{ entrega.fecha_recepcion|date:'j \d\e F \d\e Y'|upper }}</div>
+    <div><strong>PROVEEDOR:</strong> {{ orden.proveedor.razon_social|upper }}</div>
+    <div><strong>ORDEN DE COMPRA:</strong> {{ orden.numero }}</div>
+{% endblock %}
+
+{% block cuerpo %}
+    <table class="datos-table" style="margin-bottom: 15px; font-size: 9pt;">
+        <tbody>
+            <tr>
+                <td style="width: 35%; font-weight: bold;">NO. DE PEDIDO:</td>
+                <td style="width: 65%;">{{ orden.numero }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">FECHA DE PEDIDO:</td>
+                <td>{{ entrega.fecha_entrega|date:'j \d\e F \d\e Y'|upper }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">IMPORTE FACTURA:</td>
+                <td>$ {{ factura.total|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">PROVEEDOR:</td>
+                <td>{{ orden.proveedor.razon_social }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">FOLIO FISCAL FACTURA:</td>
+                <td>{{ factura.uuid }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">FECHA DE FACTURA:</td>
+                <td>{{ factura.fecha }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">FECHA DE RECEPCIÓN:</td>
+                <td>{{ entrega.fecha_recepcion|date:'j \d\e F \d\e Y'|upper }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p class="oficio-texto">
+        POR MEDIO DEL PRESENTE DOCUMENTO SE HACE CONSTAR LA RECEPCIÓN DE LOS BIENES Y/O MATERIALES
+        DESCRITOS A CONTINUACIÓN, LOS CUALES FUERON ENTREGADOS POR EL PROVEEDOR CORRESPONDIENTE
+        EN LAS INSTALACIONES DE ESTE H. AYUNTAMIENTO MUNICIPAL, QUEDANDO BAJO RESGUARDO DEL ALMACÉN.
+    </p>
+
+    <div style="font-weight: bold; font-size: 9.5pt; margin-top: 15px; margin-bottom: 5px;">
+        RELACIÓN DE BIENES RECIBIDOS:
+    </div>
+{% endblock %}
+
+{% block tabla_datos %}
+    <table class="datos-table">
+        <thead>
+            <tr>
+                <th style="width: 10%;">CLAVE COG</th>
+                <th style="width: 35%;">DESCRIPCIÓN DEL BIEN</th>
+                <th style="width: 10%;">CANTIDAD</th>
+                <th style="width: 15%;">UNIDAD DE MEDIDA</th>
+                <th style="width: 15%;">PRECIO UNITARIO</th>
+                <th style="width: 15%;">TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in detalles %}
+                <tr>
+                    <td class="center">{{ detalle.clave_cog }}</td>
+                    <td>{{ detalle.detalle_orden.concepto }}</td>
+                    <td class="center">{{ detalle.cantidad_recibida }}</td>
+                    <td class="center">{{ detalle.detalle_orden.unidad }}</td>
+                    <td class="right">${{ detalle.precio_unitario|floatformat:2 }}</td>
+                    <td class="right">${{ detalle.total|floatformat:2 }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="center">No hay bienes registrados en esta entrega.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="5" class="right" style="font-weight: bold;">TOTAL:</td>
+                <td class="right" style="font-weight: bold;">${{ entrega.total|floatformat:2 }}</td>
+            </tr>
+        </tfoot>
+    </table>
+{% endblock %}
+
+{% block pie_contenido %}
+    <div style="margin-top: 20px; margin-bottom: 5px; font-weight: bold; font-size: 9.5pt;">
+        I. ASPECTOS GENERALES
+    </div>
+    <table class="datos-table" style="font-size: 9pt;">
+        <tbody>
+            <tr>
+                <td style="width: 75%;">¿Se recibió el total de los materiales adjudicados en el pedido?</td>
+                <td style="width: 25%; text-align: center;">Si &nbsp;&nbsp; No</td>
+            </tr>
+            <tr>
+                <td colspan="2" style="font-size: 8.5pt;">En caso de no, ¿por qué? &nbsp; _______________________________________________</td>
+            </tr>
+            <tr>
+                <td>¿El importe del pedido y factura es igual?</td>
+                <td style="text-align: center;">Si &nbsp;&nbsp; No</td>
+            </tr>
+            <tr>
+                <td colspan="2" style="font-size: 8.5pt;">En caso de no, ¿por qué? &nbsp; _______________________________________________</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="margin-top: 15px; margin-bottom: 5px; font-weight: bold; font-size: 9.5pt;">
+        II. INSPECCIÓN FÍSICA
+    </div>
+    <table class="datos-table" style="font-size: 9pt;">
+        <tbody>
+            <tr>
+                <td style="width: 75%;">¿El empaque está cerrado?</td>
+                <td style="width: 25%; text-align: center;">Si &nbsp;&nbsp; No</td>
+            </tr>
+            <tr>
+                <td colspan="2" style="font-size: 8.5pt;">En caso de no, ¿por qué? &nbsp; _______________________________________________</td>
+            </tr>
+            <tr>
+                <td>¿Las especificaciones del proveedor cumplen con las del pedido?</td>
+                <td style="text-align: center;">Si &nbsp;&nbsp; No</td>
+            </tr>
+            <tr>
+                <td colspan="2" style="font-size: 8.5pt;">En caso de no, ¿por qué? &nbsp; _______________________________________________</td>
+            </tr>
+            <tr>
+                <td>La apariencia física del artículo es:</td>
+                <td style="text-align: center;">Excelente &nbsp;&nbsp; Buena &nbsp;&nbsp; No aceptable</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p class="oficio-texto" style="margin-top: 20px;">
+        LOS BIENES DESCRITOS EN EL PRESENTE DOCUMENTO HAN SIDO REVISADOS Y ACEPTADOS DE CONFORMIDAD
+        POR PARTE DEL ALMACÉN MUNICIPAL. CUALQUIER DISCREPANCIA DEBERÁ SER NOTIFICADA AL ÁREA DE
+        ADQUISICIONES EN UN PLAZO NO MAYOR A CINCO DÍAS HÁBILES.
+    </p>
+{% endblock %}
+
+{% block firmas %}
+<div class="firmas-container">
+    <div class="firmas-row">
+        <div class="firma-bloque">
+            <div style="height: 80px;"></div>
+            <div class="firma-linea"></div>
+            <div class="firma-nombre">{{ orden.proveedor.razon_social|upper }}</div>
+            <div class="firma-cargo">ENTREGA (PROVEEDOR)</div>
+        </div>
+        <div class="firma-bloque">
+            <div style="height: 80px;"></div>
+            <div class="firma-linea"></div>
+            <div class="firma-nombre">{{ entrega.recibido_por.get_full_name|upper }}</div>
+            <div class="firma-cargo">RECIBE (ALMACÉN)</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block post_firmas %}
+{% if evidencias %}
+<div style="page-break-before: always;"></div>
+
+<div style="margin-bottom: 16px; border-bottom: 2px solid #333; padding-bottom: 8px;">
+  <h3 style="font-size: 13px; margin: 0;">
+    EVIDENCIAS FOTOGRÁFICAS DE RECEPCIÓN
+  </h3>
+  <p style="font-size: 10px; color: #555; margin: 4px 0 0;">
+    {{ entrega.numero }} — {{ entrega.fecha_recepcion|date:"d/m/Y H:i" }}
+    — Total: {{ evidencias|length }} foto(s)
+  </p>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+  {% for foto in evidencias %}
+  <div style="border: 1px solid #ccc; border-radius: 4px; overflow: hidden; page-break-inside: avoid;">
+    <img src="file:///{{ foto.path }}"
+         style="width: 100%; height: 200px; object-fit: cover; display: block;"
+         alt="Evidencia {{ forloop.counter }}">
+    <div style="padding: 6px 8px; background: #f9f9f9; border-top: 1px solid #eee; font-size: 10px;">
+      <div style="font-weight: 500;">
+        {% if foto.descripcion %}
+          {{ foto.descripcion }}
+        {% else %}
+          Evidencia {{ forloop.counter }}
+        {% endif %}
+      </div>
+      <div style="color: #777;">{{ foto.fecha|date:"d/m/Y H:i" }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

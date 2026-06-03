@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* xhtml2pdf-compatible @page: only size and margin are supported */
+        @page {
+            size: letter;
+            margin: 1.5cm 2cm 2cm 2cm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #000;
+        }
+
+        /* Page number footer rendered as a PDF-static element */
+        .page-numero {
+            text-align: right;
+            font-size: 8pt;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        /* En caso de NO tener membrete como fondo absoluto, mostramos el generico */
+        .membrete-generico {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            border-bottom: 2px solid #ccc;
+            margin-bottom: 30px;
+        }
+
+        .membrete-logo {
+            width: 100px;
+            height: 100px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .membrete-datos {
+            flex: 1;
+            margin-left: 30px;
+            text-align: center;
+        }
+
+        .membrete-datos h1 {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        /* HEADER DOS COLUMNAS - ESTILO INSTITUCIONAL */
+        .meta-header-table {
+            width: 100%;
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+
+        .meta-header-table td {
+            vertical-align: top;
+            padding: 2px;
+            border: none;
+            background-color: transparent;
+        }
+
+        .meta-logo-col {
+            width: 40%;
+            text-align: center;
+        }
+
+        .meta-logo-col img {
+            width: 120px;
+            height: auto;
+            margin-bottom: 5px;
+        }
+
+        .meta-logo-text {
+            font-size: 11pt;
+            font-weight: bold;
+        }
+        
+        .meta-logo-anio {
+            font-size: 10pt;
+        }
+
+        .meta-details-col {
+            width: 60%;
+            text-align: right;
+        }
+
+        .meta-details-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .meta-details-table td {
+            text-align: left;
+            padding: 4px;
+            font-size: 9.5pt;
+        }
+
+        .meta-label {
+            width: 40%;
+            text-align: right !important;
+            padding-right: 10px !important;
+            font-weight: normal;
+        }
+
+        .meta-value {
+            width: 60%;
+            text-align: left;
+        }
+
+        .frase-anio {
+            text-align: center;
+            font-size: 8.5pt;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .destinatario-container {
+            width: 100%;
+            margin-bottom: 20px;
+            display: table;
+        }
+        
+        .destinatario-row {
+            display: table-row;
+        }
+
+        .destinatario-izq {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+            font-size: 10pt;
+            line-height: 1.3;
+        }
+
+        .destinatario-der {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+            font-size: 10pt;
+            line-height: 1.3;
+            padding-left: 20px;
+        }
+
+        .nombre-destinatario {
+            font-size: 11pt;
+            font-weight: bold;
+        }
+
+        .cuerpo-contenido {
+            margin: 20px 0;
+            text-align: justify;
+            font-size: 9.5pt;
+            line-height: 1.5;
+        }
+
+        table.datos-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 9pt;
+        }
+
+        table.datos-table th, table.datos-table td {
+            border: 1px solid #000;
+            padding: 6px;
+            text-align: left;
+            background-color: transparent;
+        }
+
+        table.datos-table th {
+            text-align: center;
+            font-weight: normal;
+        }
+
+        table.datos-table td.center {
+            text-align: center;
+        }
+        
+        table.datos-table td.right {
+            text-align: right;
+        }
+
+        .firmas-container {
+            width: 100%;
+            margin-top: 60px;
+            display: table;
+            table-layout: fixed;
+        }
+
+        .firmas-row {
+            display: table-row;
+        }
+
+        .firma-bloque {
+            display: table-cell;
+            text-align: center;
+            vertical-align: bottom;
+            padding: 0 10px;
+        }
+
+        .firma-linea {
+            border-top: 1px solid #000;
+            margin-top: 50px;
+            margin-bottom: 5px;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .firma-nombre {
+            font-weight: bold;
+            font-size: 9.5pt;
+            text-transform: uppercase;
+        }
+
+        .firma-cargo {
+            font-size: 9pt;
+            text-transform: uppercase;
+        }
+
+        /* Bloque especial para Sindicatura -> Sello -> Tesoreria como en el ejemplo */
+        .sello-central {
+            position: relative;
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .sello-img-container {
+             height: 100px;
+             display: flex;
+             align-items: flex-end; /* Para que la imagen quede sobre la firma */
+             justify-content: center;
+             position: relative;
+        }
+
+        .sello-img {
+            max-height: 140px;
+            position: absolute;
+            z-index: -1;
+            bottom: -20px;
+        }
+
+        .texto-atentamente {
+            text-align: center;
+            font-weight: normal;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            font-size: 10pt;
+        }
+        
+    </style>
+</head>
+<body>
+
+    {% if membrete_path %}
+    <!-- Membrete como imagen normal (xhtml2pdf no soporta background-image en @page) -->
+    <div style="text-align:center; margin-bottom: 10px;">
+        <img src="file:///{{ membrete_path }}" alt="Membrete" style="width:100%; max-height:120px;">
+    </div>
+    {% elif not company.membrete %}
+    <!-- Si no hay membrete cargado, ponemos los datos institucionales -->
+    <div class="membrete-generico">
+        {% if logo_path %}
+            <img src="file:///{{ logo_path }}" alt="Logo" style="width:80px; height:auto; margin-right:20px;">
+        {% endif %}
+        <div class="membrete-datos">
+            <h1>{{ company.razon_social }}</h1>
+            <p>{{ company.direccion_completa }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ENCABEZADO INSTITUCIONAL A DOS COLUMNAS -->
+    <table class="meta-header-table">
+        <tr>
+            <td class="meta-logo-col">
+                &nbsp;
+            </td>
+            <td class="meta-details-col">
+                <table class="meta-details-table">
+                    <tr>
+                        <td class="meta-label">DEPENDENCIA:</td>
+                        <td class="meta-value">{{ company.razon_social|default:"H. AYUNTAMIENTO MUNICIPAL" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">ÁREA ADMINISTRATIVA:</td>
+                        <td class="meta-value">{% block area_administrativa %}{% endblock %}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">ASUNTO:</td>
+                        <td class="meta-value">{% block asunto %}{% endblock %}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- LUGAR Y FECHA a la derecha -->
+    <div style="text-align: right; font-size: 10pt; margin-bottom: 10px;">
+        {% block lugar_fecha %}{% endblock %}
+    </div>
+
+    <!-- FRASE DEL AÑO -->
+    <div class="frase-anio">
+        {{ lema_anual }}
+    </div>
+
+    <!-- DESTINATARIOS (usando tabla HTML en vez de display:table para xhtml2pdf) -->
+    <table style="width:100%; margin-bottom:20px; border:none;">
+        <tr>
+            <td style="width:50%; vertical-align:top; font-size:10pt; line-height:1.3; border:none; background:transparent;">
+                {% block destinatario_izq %}{% endblock %}
+            </td>
+            <td style="width:50%; vertical-align:top; font-size:10pt; line-height:1.3; padding-left:20px; border:none; background:transparent;">
+                {% block folio_doc %}{% endblock %}
+                {% block destinatario_der %}{% endblock %}
+            </td>
+        </tr>
+    </table>
+
+    <!-- CUERPO PRINCIPAL -->
+    <div class="cuerpo-contenido">
+        {% block cuerpo %}{% endblock %}
+    </div>
+
+    <!-- TABLAS DE DATOS -->
+    {% block tabla_datos %}{% endblock %}
+
+    <!-- FIN DEL CONTENIDO -->
+    {% block pie_contenido %}{% endblock %}
+
+    <!-- FIRMAS (tabla HTML real en vez de display:table para xhtml2pdf) -->
+    
+    <div class="texto-atentamente">
+        ATENTAMENTE
+    </div>
+
+    {% block firmas %}
+    {% if firmantes %}
+    <table style="width:100%; margin-top:60px; border:none; table-layout:fixed;">
+        <tr>
+            {% for firmante in firmantes %}
+            <td style="text-align:center; vertical-align:bottom; padding:0 10px; border:none; background:transparent;">
+                {% if firmante.sello_path %}
+                <div style="height:80px; text-align:center;">
+                    <img src="file:///{{ firmante.sello_path }}" alt="Sello" style="max-height:80px;">
+                </div>
+                {% else %}
+                <div style="height:80px;"></div>
+                {% endif %}
+                <div class="firma-linea"></div>
+                <div class="firma-nombre">{{ firmante.nombre_completo }}</div>
+                <div class="firma-cargo">{{ firmante.cargo }}</div>
+            </td>
+            {% endfor %}
+        </tr>
+    </table>
+    {% endif %}
+    {% endblock %}
+
+    {% block post_firmas %}{% endblock %}
+
+</body>
+</html>

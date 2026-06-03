@@ -1,0 +1,27 @@
+Inicio: Configuración de Presupuesto
+   |
+Crear Plantilla Presupuestal
+   |
+Definir datos generales:
+   - Entidad Federativa
+   - Clasificador Administrativo
+   - No. Municipio
+   - Unidad Administrativa
+   - Ejercicio Fiscal
+   |
+Importar Claves desde Excel / Capturar manualmente
+   |
+Procesar cada línea de la Plantilla
+   |
+Obtener Clasificadores Específicos:
+   - Unidad Ejecutora
+   - COG
+   - Programa Presupuestario
+   - Fuente Financiamiento
+   - etc.
+   |
+Concatenar → Clave Presupuestaria Armada
+   |
+Guardar en Base de Datos
+   |
+Fin: Claves listas para uso en requisiciones

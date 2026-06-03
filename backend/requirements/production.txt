@@ -1,0 +1,15 @@
+# Production requirements
+-r base.txt
+
+# Production server
+gunicorn>=21.2.0
+uvicorn>=0.24.0
+
+# Security
+django-csp>=3.7
+
+# Monitoring
+sentry-sdk>=1.38.0
+
+# Excluir weasyprint en produccion (requiere libs nativas no disponibles en Render)
+# weasyprint se usa solo en desarrollo local

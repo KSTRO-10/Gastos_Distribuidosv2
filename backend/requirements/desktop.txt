@@ -1,0 +1,4 @@
+-r local.txt
+
+pywebview>=5.0
+pyinstaller>=6.0

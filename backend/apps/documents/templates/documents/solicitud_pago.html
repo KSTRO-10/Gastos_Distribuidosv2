@@ -1,0 +1,147 @@
+{% extends "documents/_base_documento.html" %}
+{% load documents_extras %}
+{# Contexto principal: solicitud_pago (SolicitudPago)
+   Variables de contexto adicionales:
+     - lugar
+     - tesorera
+     - presidente_municipal #}
+
+{% block area_administrativa %}
+    TESORERIA MUNICIPAL
+{% endblock %}
+
+{% block asunto %}
+    SOLICITUD DE PAGO
+{% endblock %}
+
+{% block lugar_fecha %}
+    {{ lugar }}, a {{ solicitud_pago.fecha_solicitud }}
+{% endblock %}
+
+{% block destinatario_izq %}
+    <div class="nombre-destinatario">{{ solicitud_pago.solicitud_gasto.solicitante.get_full_name }}</div>
+    <div>ENCARGADO DE ADQUISICIONES DE BIENES Y SERVICIOS</div>
+    <div>PRESENTE</div>
+{% endblock %}
+
+{% block folio_doc %}
+    <div><strong>No. {{ solicitud_pago.numero }}</strong></div>
+{% endblock %}
+
+{% block cuerpo %}
+    <p class="oficio-texto">
+        En base a la solicitud de gasto No.
+        <strong>{{ solicitud_pago.solicitud_gasto.numero }}</strong>
+        de fecha {{ solicitud_pago.solicitud_gasto.fecha_solicitud }},
+        le pedimos tramitar la siguiente solicitud de pago.
+    </p>
+
+    <div style="margin-top: 15px; margin-bottom: 5px; font-weight: bold; font-size: 9pt;">
+        CONCEPTO: AUTORIZACION DE PAGO A PROVEEDOR
+    </div>
+
+    <table class="datos-table" style="margin-top: 5px; margin-bottom: 15px;">
+        <tbody>
+            <tr>
+                <td style="width: 30%; font-weight: bold;">A favor de:</td>
+                <td style="width: 70%;">{{ solicitud_pago.solicitud_gasto.factura.proveedor.razon_social }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">Por el importe de:</td>
+                <td>{{ solicitud_pago.solicitud_gasto.factura.total|numero_a_letras }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">Folio fiscal:</td>
+                <td>{{ solicitud_pago.solicitud_gasto.factura.uuid_cfdi }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">No. de factura:</td>
+                <td>{{ solicitud_pago.solicitud_gasto.factura.folio }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">Fecha de factura:</td>
+                <td>{{ solicitud_pago.solicitud_gasto.factura.fecha }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">Fondo / Programa:</td>
+                <td>{{ solicitud_pago.solicitud_gasto.fondo_programa }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">Banco:</td>
+                <td>{{ solicitud_pago.banco }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">Numero de cuenta:</td>
+                <td>{{ solicitud_pago.numero_cuenta }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="margin-top: 10px; margin-bottom: 10px; font-weight: bold; font-size: 9.5pt;">
+        CUENTA COG: {{ solicitud_pago.cog_clave }} &mdash; {{ solicitud_pago.cog_nombre }}
+    </div>
+{% endblock %}
+
+{% block tabla_datos %}
+    <div style="font-weight: bold; font-size: 9.5pt; margin-bottom: 5px;">
+        DISTRIBUCION DEL GASTO
+    </div>
+
+    <table class="datos-table">
+        <thead>
+            <tr>
+                <th style="width: 8%;">No.</th>
+                <th style="width: 35%;">Area administrativa</th>
+                <th style="width: 32%;">Clave presupuestaria</th>
+                <th style="width: 25%;">Importe</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in solicitud_pago.items.all %}
+                <tr>
+                    <td class="center">{{ forloop.counter }}</td>
+                    <td>{{ item.area.name }}</td>
+                    <td>{{ item.clave_presupuestaria }}</td>
+                    <td class="right">$ {{ item.importe|floatformat:2 }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" class="center">No hay items registrados.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3" class="right" style="font-weight: bold;">SUB TOTAL:</td>
+                <td class="right" style="font-weight: bold;">
+                    $ {{ solicitud_pago.solicitud_gasto.factura.total|floatformat:2 }}
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+{% endblock %}
+
+{% block firmas %}
+<div class="firmas-container" style="page-break-before: avoid; margin-top: 40px;">
+    <div class="firmas-row">
+        <div class="firma-bloque">
+            <div style="height: 80px;"></div>
+            <div class="firma-linea"></div>
+            <div class="firma-nombre">{{ solicitud_pago.solicitud_gasto.solicitante.get_full_name|upper }}</div>
+            <div class="firma-cargo">ENCARGADO DE ADQUISICIONES</div>
+        </div>
+        <div class="firma-bloque">
+            <div style="height: 80px;"></div>
+            <div class="firma-linea"></div>
+            <div class="firma-nombre">{{ tesorera.get_full_name|upper }}</div>
+            <div class="firma-cargo">TESORERA MUNICIPAL</div>
+        </div>
+        <div class="firma-bloque">
+            <div style="height: 80px;"></div>
+            <div class="firma-linea"></div>
+            <div class="firma-nombre">{{ presidente_municipal.get_full_name|upper }}</div>
+            <div class="firma-cargo">PRESIDENTE MUNICIPAL</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

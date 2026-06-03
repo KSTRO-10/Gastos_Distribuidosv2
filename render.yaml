@@ -1,0 +1,29 @@
+services:
+  # Django Backend API
+  - type: web
+    name: gastos-distribuidos-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements/production.txt && python manage.py collectstatic --noinput && python manage.py migrate_schemas --shared
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      # Las siguientes variables las configuras manualmente en el dashboard de Render:
+      # DATABASE_URL  -> tu Neon connection string
+      # DB_HOST       -> host de Neon
+      # DB_PORT       -> 5432
+      # POSTGRES_DB   -> nombre de tu DB en Neon
+      # POSTGRES_USER -> usuario de Neon
+      # POSTGRES_PASSWORD -> password de Neon
+      # CELERY_BROKER_URL    -> tu URL de Upstash Redis
+      # CELERY_RESULT_BACKEND -> tu URL de Upstash Redis
+      # CORS_ALLOWED_ORIGINS -> https://tu-app.vercel.app

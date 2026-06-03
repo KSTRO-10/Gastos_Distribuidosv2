@@ -1,0 +1,138 @@
+{% extends "documents/_base_documento.html" %}
+{% load documents_extras %}
+{# Contexto principal: factura (Factura)
+   Variables de contexto adicionales:
+     - distribuciones (queryset ordenado por area__name)
+     - subtotales_por_area (dict: area_id -> Decimal)
+     - lugar
+     - firmantes #}
+
+{% block area_administrativa %}
+    TESORERIA MUNICIPAL
+{% endblock %}
+
+{% block asunto %}
+    DISTRIBUCION DE GASTO
+{% endblock %}
+
+{% block lugar_fecha %}
+    {{ lugar }}, a {{ factura.fecha|date:"d/m/Y" }}
+{% endblock %}
+
+{% block folio_doc %}
+    <div><strong>Folio fiscal:</strong></div>
+    <div style="font-size: 8.5pt; word-break: break-all;">{{ factura.uuid_cfdi|default:"-" }}</div>
+{% endblock %}
+
+{% block destinatario_izq %}
+    {% if firmantes.0 %}
+        <div class="nombre-destinatario">{{ firmantes.0.nombre_completo|upper }}</div>
+        <div>{{ firmantes.0.cargo|upper }}</div>
+        <div>PRESENTE</div>
+    {% endif %}
+{% endblock %}
+
+{% block cuerpo %}
+    <p class="oficio-texto">
+        Por este conducto se hace constar la distribucion del gasto
+        correspondiente a la siguiente factura:
+    </p>
+
+    <table style="width: 100%; margin-top: 8px; margin-bottom: 8px; font-size: 9pt; border-collapse: collapse;">
+        <tbody>
+            <tr>
+                <td style="padding: 2px 6px; width: 12%;"><strong>Proveedor:</strong></td>
+                <td style="padding: 2px 6px; width: 53%;">{{ factura.nombre_emisor|default:factura.proveedor.razon_social }}</td>
+                <td style="padding: 2px 6px; width: 10%;"><strong>RFC:</strong></td>
+                <td style="padding: 2px 6px; width: 25%;">{{ factura.rfc_emisor|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 2px 6px;"><strong>Fecha:</strong></td>
+                <td style="padding: 2px 6px;">{{ factura.fecha|date:"d/m/Y" }}</td>
+                <td style="padding: 2px 6px;"><strong>Importe total:</strong></td>
+                <td style="padding: 2px 6px;">{{ factura.total|moneda }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 2px 6px;"><strong>Folio fiscal:</strong></td>
+                <td colspan="3" style="padding: 2px 6px; word-break: break-all;">{{ factura.uuid_cfdi|default:"-" }}</td>
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block tabla_datos %}
+    <div style="font-weight: bold; font-size: 9.5pt; margin-bottom: 5px;">
+        DISTRIBUCION DEL GASTO POR AREA
+    </div>
+
+    {% regroup distribuciones by area as dist_by_area %}
+
+    {% for area_group in dist_by_area %}
+        <div style="background-color: #e0e0e0; padding: 5px 8px; font-weight: bold; font-size: 9pt; margin-top: 10px; border: 1px solid #000;">
+            AREA ADMINISTRATIVA: {{ area_group.grouper.name|upper }}
+        </div>
+
+        <table class="datos-table" style="margin-top: 0;">
+            <thead>
+                <tr>
+                    <th style="width: 6%;">No.</th>
+                    <th style="width: 18%;">Concepto</th>
+                    <th style="width: 46%;">Descripcion</th>
+                    <th style="width: 18%;">Monto</th>
+                    <th style="width: 12%;">%</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dist in area_group.list %}
+                    <tr>
+                        <td class="center">{{ forloop.counter }}</td>
+                        <td>{{ dist.concepto.clave_prod_serv|default:"-" }}</td>
+                        <td>{{ dist.concepto.descripcion|truncatechars:120 }}</td>
+                        <td class="right">{{ dist.monto|moneda }}</td>
+                        <td class="right">{{ dist.porcentaje|floatformat:1 }} %</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="center">Sin distribuciones para esta area.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="right" style="font-weight: bold;">
+                        SUBTOTAL AREA {{ area_group.grouper.name|upper }}:
+                    </td>
+                    <td class="right" style="font-weight: bold;">
+                        {{ subtotales_por_area|get_item:area_group.grouper.id|moneda }}
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    {% empty %}
+        <p style="font-size: 9pt; font-style: italic; margin-top: 10px;">
+            No hay distribuciones registradas para esta factura.
+        </p>
+    {% endfor %}
+
+    <table class="datos-table" style="margin-top: 15px;">
+        <tfoot>
+            <tr>
+                <td colspan="3" class="right" style="font-weight: bold; background-color: #d0d0d0;">
+                    TOTAL FACTURA:
+                </td>
+                <td class="right" style="font-weight: bold; background-color: #d0d0d0; width: 18%;">
+                    {{ factura.total|moneda }}
+                </td>
+                <td style="background-color: #d0d0d0; width: 12%;"></td>
+            </tr>
+        </tfoot>
+    </table>
+{% endblock %}
+
+{% block pie_contenido %}
+    <p style="margin-top: 25px; font-size: 9.5pt; text-align: justify;">
+        El presente documento certifica que los gastos han sido
+        distribuidos conforme a lo autorizado.
+    </p>
+{% endblock %}

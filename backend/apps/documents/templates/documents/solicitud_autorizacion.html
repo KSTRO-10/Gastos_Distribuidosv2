@@ -1,0 +1,184 @@
+{% extends "documents/_base_documento.html" %}
+{# Contexto principal: solicitud_aut (SolicitudAutorizacion)
+   Navegación a la solicitud de materiales vinculada via solicitud_aut.solicitud
+   - Área:        solicitud_aut.solicitud.area.name
+   - Fecha:       solicitud_aut.fecha_solicitud
+   - Eje rector:  solicitud_aut.solicitud.eje_rector
+   - Programa:    solicitud_aut.solicitud.programa_presupuestario
+   - Número sol.: solicitud_aut.solicitud.numero
+   Variables de contexto adicionales: ejercicio_fiscal, partida_presupuestal,
+                                       detalles, cotizacion #}
+
+{% block area_administrativa %}
+    {{ solicitud_aut.solicitud.area.name|default:"ÁREA SOLICITANTE" }}
+{% endblock %}
+
+{% block asunto %}
+    SOLICITUD DE AUTORIZACIÓN DE SUFICIENCIA PRESUPUESTARIA
+{% endblock %}
+
+{% block lugar_fecha %}
+    PRESIDENCIA MUNICIPAL, {{ solicitud_aut.fecha_solicitud|date:'j \d\e F \d\e Y'|upper }}
+{% endblock %}
+
+{% block destinatario_izq %}
+    <div class="nombre-destinatario">DIRECCIÓN DE EGRESOS</div>
+    <div>TESORERÍA MUNICIPAL</div>
+    <div>PRESENTE</div>
+{% endblock %}
+
+{% block destinatario_der %}
+    <div><strong>NÚMERO:</strong></div>
+    <div>{{ solicitud_aut.numero }}</div>
+
+    <div style="margin-top: 10px;"><strong>SOLICITANTE:</strong></div>
+    <div>{{ solicitud_aut.solicitante.get_full_name }}</div>
+{% endblock %}
+
+{% block cuerpo %}
+    <p class="oficio-texto">
+        POR MEDIO DEL PRESENTE, ME PERMITO SOLICITAR A USTED DE LA MANERA MÁS ATENTA,
+        LA AUTORIZACIÓN DE SUFICIENCIA PRESUPUESTARIA PARA DAR CONTINUIDAD AL PROCESO
+        DE ADQUISICIÓN DE LOS MATERIALES Y/O SERVICIOS QUE SE DESCRIBEN A CONTINUACIÓN,
+        LOS CUALES SON INDISPENSABLES PARA EL CUMPLIMIENTO DE LAS FUNCIONES Y ACTIVIDADES
+        ENCOMENDADAS AL ÁREA A MI CARGO.
+    </p>
+
+    <div style="margin-top: 15px; margin-bottom: 5px; font-weight: bold; font-size: 9pt;">
+        CLASIFICACIÓN PRESUPUESTARIA:
+    </div>
+
+    <table class="datos-table" style="margin-top: 5px; margin-bottom: 15px;">
+        <tbody>
+            <tr>
+                <td style="width: 35%; font-weight: bold;">EJE RECTOR:</td>
+                <td style="width: 65%;">{{ solicitud_aut.solicitud.eje_rector|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">PROGRAMA PRESUPUESTARIO:</td>
+                <td>{{ solicitud_aut.solicitud.programa_presupuestario|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">ÁREA SOLICITANTE:</td>
+                <td>{{ solicitud_aut.solicitud.area.name|default:"-" }}</td>
+            </tr>
+            {% if cotizacion %}
+            <tr>
+                <td style="font-weight: bold;">COTIZACIÓN DE REFERENCIA:</td>
+                <td>{{ cotizacion.numero }} — Total: ${{ cotizacion.total }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <table class="datos-table" style="margin-top: 10px; margin-bottom: 15px;">
+        <tbody>
+            <tr>
+                <td style="width: 35%; font-weight: bold;">MONTO SOLICITADO:</td>
+                <td style="width: 65%; font-size: 11pt;"><strong>${{ solicitud_aut.monto_solicitado }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    {% if solicitud_aut.justificacion %}
+    <div style="margin-top: 10px; margin-bottom: 15px;">
+        <div style="font-weight: bold; font-size: 9pt; margin-bottom: 5px;">JUSTIFICACIÓN:</div>
+        <p class="oficio-texto">{{ solicitud_aut.justificacion }}</p>
+    </div>
+    {% endif %}
+
+    <div style="font-weight: bold; font-size: 9.5pt; margin-bottom: 5px;">
+        MATERIALES Y/O SERVICIOS SOLICITADOS:
+    </div>
+{% endblock %}
+
+{% block tabla_datos %}
+    <p class="oficio-texto" style="margin-bottom: 10px;">
+        En referencia a solicitud de materiales No. {{ solicitud_aut.solicitud.numero }}
+    </p>
+
+    <div style="font-weight: bold; font-size: 9pt; margin-bottom: 5px;">CONCEPTOS SOLICITADOS:</div>
+    <table class="datos-table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">NO.</th>
+                <th style="width: 55%;">CONCEPTO</th>
+                <th style="width: 15%;">CANTIDAD</th>
+                <th style="width: 25%;">IMPORTE</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in detalles %}
+                <tr>
+                    <td class="center">{{ forloop.counter }}</td>
+                    <td>
+                        <strong>{{ detalle.concepto }}</strong>
+                        {% if detalle.descripcion %}<br><span style="font-size: 8pt; color: #555;">{{ detalle.descripcion }}</span>{% endif %}
+                    </td>
+                    <td class="center">{{ detalle.cantidad }}</td>
+                    <td class="right">${{ detalle.importe|floatformat:2 }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" class="center">No hay materiales registrados.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="font-weight: bold; font-size: 9pt; margin-top: 15px; margin-bottom: 5px;">ESTRUCTURA FINANCIERA:</div>
+    <table class="datos-table">
+        <thead>
+            <tr>
+                <th style="width: 25%;">EJERCICIO FISCAL</th>
+                <th style="width: 50%;">PARTIDA PRESUPUESTAL</th>
+                <th style="width: 25%;">IMPORTE</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="center">{{ ejercicio_fiscal }}</td>
+                <td>{{ partida_presupuestal }}</td>
+                <td class="right">${{ solicitud_aut.monto_solicitado|floatformat:2 }}</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="2" class="right" style="font-weight: bold;">TOTAL:</td>
+                <td class="right" style="font-weight: bold;">${{ solicitud_aut.monto_solicitado|floatformat:2 }}</td>
+            </tr>
+        </tfoot>
+    </table>
+{% endblock %}
+
+{% block pie_contenido %}
+    <p class="oficio-texto" style="margin-top: 20px;">
+        SIN OTRO PARTICULAR DE MOMENTO Y EN ESPERA DE LA AUTORIZACIÓN CORRESPONDIENTE,
+        APROVECHO LA OCASIÓN PARA ENVIARLE UN CORDIAL SALUDO.
+    </p>
+{% endblock %}
+
+{% block firmas %}
+<div class="firmas-container">
+    <div class="firmas-row">
+        <div class="firma-bloque">
+            <div style="height: 80px;"></div>
+            <div class="firma-linea"></div>
+            <div class="firma-nombre">{{ solicitud_aut.solicitante.get_full_name|upper }}</div>
+            <div class="firma-cargo">SOLICITO</div>
+        </div>
+        <div class="firma-bloque">
+            <div style="height: 80px;"></div>
+            <div class="firma-linea"></div>
+            <div class="firma-nombre">&nbsp;</div>
+            <div class="firma-cargo">TESORERA MUNICIPAL</div>
+        </div>
+        <div class="firma-bloque">
+            <div style="height: 80px;"></div>
+            <div class="firma-linea"></div>
+            <div class="firma-nombre">&nbsp;</div>
+            <div class="firma-cargo">ELABORÓ</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

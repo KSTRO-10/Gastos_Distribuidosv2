@@ -1,0 +1,93 @@
+{% extends "documents/_base_documento.html" %}
+
+{% block area_administrativa %}
+    ADQUISICIONES Y SERVICIOS
+{% endblock %}
+
+{% block asunto %}
+    COTIZACIÓN DE BIENES Y/O SERVICIOS
+{% endblock %}
+
+{% block lugar_fecha %}
+    {{ lugar }}, {{ cotizacion.fecha|date:'j \d\e F \d\e Y'|upper }}
+{% endblock %}
+
+{% block destinatario_izq %}
+    <div class="nombre-destinatario">{{ proveedor.nombre|upper }}</div>
+    <div>{{ proveedor.razon_social|default:""|upper }}</div>
+    <div>RFC: {{ proveedor.rfc }}</div>
+    <div>PROVEEDOR</div>
+    <div>PRESENTE</div>
+{% endblock %}
+
+{% block destinatario_der %}
+    <div><strong>FOLIO:</strong> {{ cotizacion.numero }}</div>
+    <div><strong>VIGENCIA:</strong> {{ cotizacion.vigencia|date:'j \d\e F \d\e Y'|upper }}</div>
+    <div><strong>TIEMPO DE ENTREGA:</strong> {{ cotizacion.tiempo_entrega }}</div>
+    <div><strong>CONDICIONES DE PAGO:</strong> {{ cotizacion.condiciones_pago }}</div>
+{% endblock %}
+
+{% block cuerpo %}
+    <p class="oficio-texto">
+        POR MEDIO DEL PRESENTE SE HACE CONSTAR QUE ESTE H. AYUNTAMIENTO MUNICIPAL HA RECIBIDO
+        LA PRESENTE COTIZACIÓN DE BIENES Y/O SERVICIOS, MISMA QUE SE DETALLA A CONTINUACIÓN PARA
+        LOS EFECTOS LEGALES Y ADMINISTRATIVOS A QUE HAYA LUGAR.
+    </p>
+
+    <div style="font-weight: bold; font-size: 9.5pt; margin-top: 15px; margin-bottom: 5px;">
+        RELACIÓN DE BIENES Y/O SERVICIOS COTIZADOS:
+    </div>
+{% endblock %}
+
+{% block tabla_datos %}
+    <table class="datos-table">
+        <thead>
+            <tr>
+                <th style="width: 35%;">CONCEPTO</th>
+                <th style="width: 10%;">CANTIDAD</th>
+                <th style="width: 10%;">UNIDAD</th>
+                <th style="width: 15%;">PRECIO UNITARIO</th>
+                <th style="width: 20%;">SUBTOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in detalles %}
+                <tr>
+                    <td>
+                        <strong>{{ detalle.concepto }}</strong>
+                        {% if detalle.descripcion %}<br><span style="font-size: 8pt; color: #555;">{{ detalle.descripcion }}</span>{% endif %}
+                    </td>
+                    <td class="center">{{ detalle.cantidad }}</td>
+                    <td class="center">{{ detalle.unidad }}</td>
+                    <td class="right">${{ detalle.precio_unitario|floatformat:2 }}</td>
+                    <td class="right">${{ detalle.subtotal|floatformat:2 }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="center">No hay conceptos registrados en esta cotización.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4" class="right">SUBTOTAL:</td>
+                <td class="right">${{ cotizacion.subtotal|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td colspan="4" class="right">IVA 16%:</td>
+                <td class="right">${{ cotizacion.iva|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td colspan="4" class="right" style="font-weight: bold;">TOTAL:</td>
+                <td class="right" style="font-weight: bold;">${{ cotizacion.total|floatformat:2 }}</td>
+            </tr>
+        </tfoot>
+    </table>
+{% endblock %}
+
+{% block pie_contenido %}
+    <p class="oficio-texto" style="margin-top: 20px;">
+        LA PRESENTE COTIZACIÓN ES VÁLIDA ÚNICAMENTE POR EL PERÍODO DE VIGENCIA INDICADO. CUALQUIER
+        MODIFICACIÓN EN PRECIOS O CONDICIONES DEBERÁ SER NOTIFICADA POR ESCRITO CON ANTICIPACIÓN.
+    </p>
+{% endblock %}

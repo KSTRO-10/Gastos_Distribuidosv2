@@ -1,0 +1,88 @@
+name: Build Desktop App
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    name: Build Windows Desktop App
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build React Frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Verify Frontend Build
+        run: |
+          if (-not (Test-Path frontend/dist/index.html)) {
+            Write-Error "Frontend build failed: index.html not found"
+            exit 1
+          }
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install Python Dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/desktop.txt
+
+      - name: Set Version from Tag
+        run: |
+          $tagName = "${{ github.ref_name }}"
+          $version = $tagName -replace '^v', ''
+          Set-Content -Path "backend/version.txt" -Value $version
+          Write-Output "Building version: $version"
+
+      - name: Build with PyInstaller
+        working-directory: backend
+        run: |
+          pyinstaller build_desktop.spec --clean --noconfirm
+
+      - name: Verify PyInstaller Output
+        run: |
+          if (-not (Test-Path backend/dist/GastosDistribuidos/GastosDistribuidos.exe)) {
+            Write-Error "PyInstaller build failed: exe not found"
+            exit 1
+          }
+          Write-Output "Build successful"
+
+      - name: Create Release ZIP
+        run: |
+          $tagName = "${{ github.ref_name }}"
+          $version = $tagName -replace '^v', ''
+          $zipName = "GastosDistribuidos-windows-v$version.zip"
+          Compress-Archive `
+            -Path "backend/dist/GastosDistribuidos/*" `
+            -DestinationPath $zipName
+          Write-Output "ZIP_NAME=$zipName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Output "Created: $zipName"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          files: ${{ env.ZIP_NAME }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

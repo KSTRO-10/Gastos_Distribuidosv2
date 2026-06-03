@@ -1,0 +1,76 @@
+{% extends "documents/_base_documento.html" %}
+
+{% block area_administrativa %}
+    ALMACÉN MUNICIPAL
+{% endblock %}
+
+{% block asunto %}
+    VALE DE SALIDA DE ALMACÉN
+{% endblock %}
+
+{% block lugar_fecha %}
+    {{ lugar }}, {{ salida.fecha_salida|date:'j \d\e F \d\e Y'|upper }}
+{% endblock %}
+
+{% block destinatario_izq %}
+    <div class="nombre-destinatario">{{ salida.destino_area.name|upper }}</div>
+    <div>ÁREA SOLICITANTE</div>
+    <div>PRESENTE</div>
+{% endblock %}
+
+{% block destinatario_der %}
+    <div><strong>FOLIO:</strong> {{ salida.numero }}</div>
+    <div><strong>FECHA DE SALIDA:</strong> {{ salida.fecha_salida|date:'j \d\e F \d\e Y'|upper }}</div>
+    <div><strong>ÁREA DESTINO:</strong> {{ salida.destino_area.name|upper }}</div>
+    <div><strong>AUTORIZADO POR:</strong> {{ salida.responsable.get_full_name|upper }}</div>
+{% endblock %}
+
+{% block cuerpo %}
+    <p class="oficio-texto">
+        POR MEDIO DEL PRESENTE VALE SE HACE CONSTAR LA SALIDA DE LOS BIENES Y/O MATERIALES QUE
+        A CONTINUACIÓN SE DESCRIBEN DEL ALMACÉN MUNICIPAL, LOS CUALES SON ENTREGADOS AL ÁREA
+        SOLICITANTE PARA EL DESEMPEÑO DE SUS ACTIVIDADES Y FUNCIONES INSTITUCIONALES.
+    </p>
+
+    <div style="font-weight: bold; font-size: 9.5pt; margin-top: 15px; margin-bottom: 5px;">
+        RELACIÓN DE MATERIALES EN SALIDA:
+    </div>
+{% endblock %}
+
+{% block tabla_datos %}
+    <table class="datos-table">
+        <thead>
+            <tr>
+                <th style="width: 40%;">CONCEPTO</th>
+                <th style="width: 10%;">CANTIDAD</th>
+                <th style="width: 15%;">UNIDAD</th>
+                <th style="width: 35%;">DESTINO</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in detalles %}
+                <tr>
+                    <td>
+                        <strong>{{ detalle.material }}</strong>
+                        {% if detalle.descripcion %}<br><span style="font-size: 8pt; color: #555;">{{ detalle.descripcion }}</span>{% endif %}
+                    </td>
+                    <td class="center">{{ detalle.cantidad }}</td>
+                    <td class="center">{{ detalle.unidad }}</td>
+                    <td>{{ salida.destino_area.name }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" class="center">No hay materiales registrados en esta salida.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block pie_contenido %}
+    <p class="oficio-texto" style="margin-top: 20px;">
+        LOS MATERIALES ANTES RELACIONADOS HAN SIDO ENTREGADOS EN LAS CANTIDADES INDICADAS Y EL ÁREA
+        RECEPTORA SE HACE RESPONSABLE DEL USO ADECUADO Y DESTINO FINAL DE LOS MISMOS, DE CONFORMIDAD
+        CON LA NORMATIVIDAD VIGENTE EN MATERIA DE CONTROL PATRIMONIAL.
+    </p>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "documents/_base_documento.html" %}
+
+{% block area_administrativa %}
+    DIRECCIÓN DE EGRESOS
+{% endblock %}
+
+{% block asunto %}
+    AUTORIZACIÓN PRESUPUESTARIA
+{% endblock %}
+
+{% block lugar_fecha %}
+    {{ lugar }}, a {{ autorizacion.fecha_aprobacion|date:'d/m/Y' }}
+{% endblock %}
+
+{% block destinatario_izq %}
+    <div class="nombre-destinatario">MEMORÁNDUM DE AUTORIZACIÓN</div>
+    <p style="margin-top: 5px;">
+        Se autoriza por este medio la suficiencia presupuestaria solicitada conforme a los términos 
+        establecidos en la normatividad fiscal y presupuestaria aplicable.
+    </p>
+{% endblock %}
+
+{% block folio_doc %}No. {{ autorizacion.numero }}{% endblock %}
+
+{% block destinatario_der %}
+    <div><strong>REFERENCIA:</strong></div>
+    <div>{{ autorizacion.solicitud_autorizacion.numero }}</div>
+    
+    <div style="margin-top: 10px;"><strong>AUTORIZADO POR:</strong></div>
+    <div>{{ autorizacion.aprobado_por.get_full_name }}</div>
+{% endblock %}
+
+{% block tabla_datos %}
+    <div style="text-align: center; font-weight: bold; font-size: 11pt;
+                text-transform: uppercase; margin: 10px 0 15px 0;
+                padding: 8px; border: 2px solid #000; width: 100%;">
+        ESTADO:
+        {% if autorizacion.estado == 'AUTORIZADO' %}AUTORIZADO
+        {% elif autorizacion.estado == 'RECHAZADO' %}RECHAZADO
+        {% elif autorizacion.estado == 'CONDICIONADO' %}CONDICIONADO
+        {% else %}PENDIENTE{% endif %}
+    </div>
+
+    <table class="datos-table" style="margin-top: 20px;">
+        <tbody>
+            <tr>
+                <td style="width: 30%; font-weight: bold;">SOLICITUD ORIGEN:</td>
+                <td style="width: 70%;">{{ autorizacion.solicitud_autorizacion.numero }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">MONTO SOLICITADO:</td>
+                <td>${{ autorizacion.solicitud_autorizacion.monto_solicitado }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">MONTO AUTORIZADO:</td>
+                <td style="font-size: 11pt;"><strong>${{ autorizacion.monto_autorizado }}</strong></td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">PARTIDA PRESUPUESTAL:</td>
+                <td>{{ autorizacion.partida_presupuestal }}</td>
+            </tr>
+            
+            {% if autorizacion.solicitud_autorizacion.justificacion %}
+            <tr>
+                <td style="font-weight: bold;">JUSTIFICACIÓN:</td>
+                <td>{{ autorizacion.solicitud_autorizacion.justificacion }}</td>
+            </tr>
+            {% endif %}
+            
+            {% if autorizacion.observaciones %}
+            <tr>
+                <td style="font-weight: bold;">OBSERVACIONES:</td>
+                <td>{{ autorizacion.observaciones }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block pie_contenido %}
+    <p class="oficio-texto" style="margin-top: 25px;">
+        Este documento ampara la ejecución presupuestaria bajo la responsabilidad fiscal de los oficios 
+        directamente involucrados en la operación de la presente autorización.
+    </p>
+{% endblock %}

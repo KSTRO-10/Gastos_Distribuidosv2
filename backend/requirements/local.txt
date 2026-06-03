@@ -1,0 +1,9 @@
+# Local development requirements (no Docker dependencies)
+-r base.txt
+
+# Debug
+ipython
+
+# PDF Generation (pure-Python, works on Windows without native libs)
+xhtml2pdf>=0.2.17
+pypdf>=6.0.0

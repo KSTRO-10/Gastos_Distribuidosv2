@@ -1,0 +1,134 @@
+{% extends "documents/_base_documento.html" %}
+{# Contexto principal: solicitud_gasto (SolicitudGasto)
+   Variables de contexto adicionales:
+     - lugar
+     - presidente_municipal
+     - sindico_municipal
+     - subtotales_por_area  (dict: {area_id: Decimal subtotal}) #}
+
+{% load documents_extras %}
+
+{% block area_administrativa %}
+    ADQUISICIONES DE BIENES Y SERVICIOS
+{% endblock %}
+
+{% block asunto %}
+    SOLICITUD DE GASTO
+{% endblock %}
+
+{% block lugar_fecha %}
+    {{ lugar }}, a {{ solicitud_gasto.fecha_solicitud }}
+{% endblock %}
+
+{% block destinatario_izq %}
+    <div class="nombre-destinatario">{{ presidente_municipal.get_full_name }}</div>
+    <div>PRESIDENTE MUNICIPAL</div>
+    <div>PRESENTE</div>
+
+    <div class="nombre-destinatario" style="margin-top: 10px;">{{ sindico_municipal.get_full_name }}</div>
+    <div>SINDICO MUNICIPAL</div>
+    <div>ATENCION</div>
+{% endblock %}
+
+{% block folio_doc %}
+    <div><strong>No. {{ solicitud_gasto.numero }}</strong></div>
+{% endblock %}
+
+{% block cuerpo %}
+    <p class="oficio-texto">
+        Por este conducto me dirijo a ustedes y en base a los materiales,
+        bienes y/o servicios ya devengados, para solicitar se autorice el
+        pago del fondo y/o programa: <strong>{{ solicitud_gasto.fondo_programa }}</strong>,
+        de la siguiente factura:
+    </p>
+
+    <table style="width:100%; margin-top:10px; margin-bottom:15px; font-size:11px; border-collapse:collapse;">
+        <tbody>
+            <tr>
+                <td style="padding:2px 8px;"><strong>Nombre del Proveedor:</strong> {{ solicitud_gasto.factura.proveedor.razon_social }}</td>
+                <td style="padding:2px 8px;"><strong>RFC:</strong> {{ solicitud_gasto.factura.proveedor.rfc }}</td>
+                <td style="padding:2px 8px;"><strong>Fecha:</strong> {{ solicitud_gasto.factura.fecha }}</td>
+                <td style="padding:2px 8px;"><strong>Importe:</strong> {{ solicitud_gasto.factura.total|moneda }}</td>
+            </tr>
+            <tr>
+                <td style="padding:2px 8px;"><strong>Folio Fiscal:</strong> {{ solicitud_gasto.factura.uuid_cfdi }}</td>
+                <td style="padding:2px 8px;"><strong>No. Factura:</strong> {{ solicitud_gasto.factura.folio }}</td>
+                <td colspan="2" style="padding:2px 8px;"><strong>Tipo de material:</strong> {{ solicitud_gasto.tipo_material }}</td>
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block tabla_datos %}
+    {% regroup solicitud_gasto.items.all by area as items_by_area %}
+
+    {% for grupo in items_by_area %}
+        <table class="datos-table" style="margin-bottom: 0;">
+            <tbody>
+                <tr>
+                    <td style="font-weight: bold; background-color: #ddd;">
+                        TIPO DE MATERIAL: {{ solicitud_gasto.tipo_material }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold; background-color: #eee;">
+                        AREA ADMINISTRATIVA: {{ grupo.grouper.name }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold; background-color: #f5f5f5;">
+                        CLAVE PRESUPUESTARIA: {{ grupo.list.0.clave_presupuestaria }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="datos-table" style="margin-top: 0;">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">No.</th>
+                    <th style="width: 8%;">Uni. Med</th>
+                    <th style="width: 20%;">Concepto del bien</th>
+                    <th style="width: 27%;">Descripcion de lo adquirido</th>
+                    <th style="width: 10%;">Cantidad</th>
+                    <th style="width: 12%;">P.U.</th>
+                    <th style="width: 18%;">Costo total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in grupo.list %}
+                    <tr>
+                        <td class="center">{{ forloop.counter }}</td>
+                        <td class="center">PZA</td>
+                        <td>{{ item.concepto_bien }}</td>
+                        <td>{{ item.descripcion_adquirido }}</td>
+                        <td class="center">{{ item.cantidad }}</td>
+                        <td class="right">{{ item.precio_unitario|moneda }}</td>
+                        <td class="right">{{ item.costo_total|moneda }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6" class="right" style="font-weight: bold;">SUBTOTAL AREA:</td>
+                    <td class="right" style="font-weight: bold;">
+                        {{ subtotales_por_area|get_item:grupo.grouper.id|moneda }}
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    {% endfor %}
+{% endblock %}
+
+{% block firmas %}
+<div class="firmas-container">
+    <div class="firmas-row">
+        <div class="firma-bloque">
+            <div style="height: 80px;"></div>
+            <div class="firma-linea"></div>
+            <div class="firma-nombre">{{ solicitud_gasto.solicitante.get_full_name|upper }}</div>
+            <div class="firma-cargo">ENCARGADO DE ADQUISICIONES DE BIENES Y SERVICIOS</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "documents/_base_documento.html" %}
+
+{% block area_administrativa %}
+    {{ area.name }}
+{% endblock %}
+
+{% block asunto %}
+    SOLICITUD DE MATERIALES
+{% endblock %}
+
+{% block lugar_fecha %}
+    {{ lugar }}, {{ solicitud.fecha|date:'j \d\e F \d\e Y'|upper }}
+{% endblock %}
+
+{% block destinatario_izq %}
+    {% if destinatario_tesoreria %}
+        <div class="nombre-destinatario">{{ destinatario_tesoreria.full_name }}</div>
+        <div>TESORERO(A) MUNICIPAL</div>
+        <div>PRESENTE</div>
+    {% endif %}
+{% endblock %}
+
+{% block folio_doc %}No. {{ solicitud.numero }}{% endblock %}
+
+{% block destinatario_der %}
+    {% if destinatario_adquisiciones %}
+        <div style="text-align: center;">
+            <div class="nombre-destinatario">{{ destinatario_adquisiciones.full_name }}</div>
+            <div>ENCARGADO DE ADQUISICIONES DE BIENES Y SERVICIOS</div>
+            <div style="letter-spacing: 4px; font-weight: bold; margin-top: 2px;">A T E N C I O N</div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block cuerpo %}
+    <p class="oficio-texto">
+        POR ESTE CONDUCTO ME DIRIJO A USTED DE LA MANERA MÁS RESPETUOSA, CON EL FIN DE SOLICITARLE 
+        LOS SIGUIENTES MATERIALES LOS CUALES SON NECESARIOS PARA REALIZAR DE MANERA EFICIENTE LAS 
+        ACTIVIDADES Y ACCIONES ENCOMENDADAS AL ÁREA A MI CARGO.
+    </p>
+
+    <div style="margin-top: 15px; margin-bottom: 10px; font-weight: bold; font-size: 9pt;">
+        ESTOS MATERIALES SOLICITADOS SON CON CARGO AL SIGUIENTE PROGRAMA PRESUPUESTARIO.
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; margin-top: 5px; margin-bottom: 15px; font-size: 9.5pt;">
+        <tbody>
+            <tr>
+                <td style="width: 30%; font-weight: bold; padding: 3px 0; vertical-align: top;">EJE RECTOR:</td>
+                <td style="width: 70%; padding: 3px 0; vertical-align: top;">{{ solicitud.eje_rector|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold; padding: 3px 0; vertical-align: top;">PROGRAMA PRESUPUESTARIO:</td>
+                <td style="padding: 3px 0; vertical-align: top;">{{ solicitud.programa_presupuestario|default:"-" }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold; padding: 3px 0; vertical-align: top;">ACTIVIDAD O ACCION:</td>
+                <td style="padding: 3px 0; vertical-align: top;">{{ solicitud.actividad|default:"-" }}</td>
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block tabla_datos %}
+    <table class="datos-table">
+        <thead>
+            <tr>
+                <th style="width: 10%;">CANTIDAD</th>
+                <th style="width: 15%;">UNIDAD DE MEDIDA</th>
+                <th style="width: 75%;">CONCEPTO</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in detalles %}
+                <tr>
+                    <td class="center">{{ detalle.cantidad }}</td>
+                    <td class="center">{{ detalle.unidad }}</td>
+                    <td>
+                        <strong>{{ detalle.concepto }}</strong>
+                        {% if detalle.descripcion %}<br><span style="font-size: 8pt; color: #555;">{{ detalle.descripcion }}</span>{% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" class="center">No hay materiales registrados en esta solicitud.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block pie_contenido %}
+    <p class="oficio-texto" style="margin-top: 20px;">
+        SIN OTRO PARTICULAR DE MOMENTO Y ESPERANDO CONTAR CON SU VALIOSO APOYO, APROVECHO 
+        LA OCASIÓN PARA ENVIARLE UN CORDIAL SALUDO.
+    </p>
+{% endblock %}
