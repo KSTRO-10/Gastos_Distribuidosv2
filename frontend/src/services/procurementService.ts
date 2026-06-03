@@ -50,6 +50,7 @@ export interface SolicitudMaterial {
   created_by_name: string
   detalles: DetalleMaterial[]
   ine_foto?: string | null
+  ine_documento?: string | null
   ine_rechazo_motivo?: string
   materiales?: {
     descripcion: string

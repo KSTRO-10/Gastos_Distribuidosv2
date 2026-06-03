@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
+import { notificationService, Notification } from '@/services/notificationService'
 import {
   Bars3Icon,
   XMarkIcon,
@@ -19,7 +20,11 @@ import {
   BoltIcon,
   ArchiveBoxIcon,
   Cog6ToothIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ExclamationCircleIcon,
+  InformationCircleIcon
 } from '@heroicons/react/24/outline'
 
 interface NavItem {
@@ -84,6 +89,88 @@ export default function MainLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
+
+  // Notifications State
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [loadingNotifications, setLoadingNotifications] = useState(false)
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return
+    try {
+      setLoadingNotifications(true)
+      const data = await notificationService.getNotifications()
+      setNotifications(data)
+      setUnreadCount(data.filter(n => !n.read).length)
+    } catch (err) {
+      console.error('Error fetching notifications:', err)
+    } finally {
+      setLoadingNotifications(false)
+    }
+  }, [user])
+
+  useEffect(() => {
+    fetchNotifications()
+    // Poll every 30 seconds for new notifications
+    const interval = setInterval(fetchNotifications, 30000)
+    return () => clearInterval(interval)
+  }, [fetchNotifications])
+
+  const handleNotificationClick = async (notification: Notification) => {
+    if (!notification.read) {
+      try {
+        await notificationService.markAsRead(notification.id)
+        setNotifications(prev =>
+          prev.map(n => (n.id === notification.id ? { ...n, read: true } : n))
+        )
+        setUnreadCount(prev => Math.max(0, prev - 1))
+      } catch (err) {
+        console.error('Error marking notification as read:', err)
+      }
+    }
+    setNotificationsOpen(false)
+    if (notification.action_url) {
+      navigate(notification.action_url)
+    }
+  }
+
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationService.markAllAsRead()
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+      setUnreadCount(0)
+    } catch (err) {
+      console.error('Error marking all notifications as read:', err)
+    }
+  }
+
+  const formatRelativeTime = (dateStr: string) => {
+    const date = new Date(dateStr)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMins / 60)
+    const diffDays = Math.floor(diffHours / 24)
+
+    if (diffMins < 1) return 'Ahora mismo'
+    if (diffMins < 60) return `Hace ${diffMins} min`
+    if (diffHours < 24) return `Hace ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`
+    return `Hace ${diffDays} ${diffDays === 1 ? 'día' : 'días'}`
+  }
+
+  const getNotificationIcon = (tipo: 'info' | 'success' | 'warning' | 'error') => {
+    switch (tipo) {
+      case 'success':
+        return <CheckCircleIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
+      case 'warning':
+        return <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0" />
+      case 'error':
+        return <ExclamationCircleIcon className="h-5 w-5 text-red-500 flex-shrink-0" />
+      default:
+        return <InformationCircleIcon className="h-5 w-5 text-blue-500 flex-shrink-0" />
+    }
+  }
 
   const handleLogout = () => {
     logout()
@@ -245,10 +332,96 @@ export default function MainLayout() {
 
           <div className="flex flex-1 justify-end gap-x-4 lg:gap-x-6">
             {/* Notifications */}
-            <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="Notificaciones">
-              <BellIcon className="h-6 w-6" />
-              <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-            </button>
+            <div className="relative flex items-center">
+              <button
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none"
+                title="Notificaciones"
+              >
+                <BellIcon className="h-6 w-6" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white animate-pulse" />
+                )}
+              </button>
+
+              {notificationsOpen && (
+                <>
+                  {/* Click outside backdrop */}
+                  <div
+                    className="fixed inset-0 z-40 cursor-default"
+                    onClick={() => setNotificationsOpen(false)}
+                  />
+
+                  {/* Dropdown panel */}
+                  <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden transform origin-top-right transition-all duration-200 top-full">
+                    <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900">Notificaciones</span>
+                        {unreadCount > 0 && (
+                          <span className="px-2 py-0.5 text-xs font-semibold text-red-600 bg-red-50 rounded-full">
+                            {unreadCount} nuevas
+                          </span>
+                        )}
+                      </div>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={handleMarkAllRead}
+                          className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                        >
+                          Marcar todas como leídas
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                      {loadingNotifications && notifications.length === 0 ? (
+                        <div className="p-8 text-center text-gray-500 text-sm">
+                          Cargando notificaciones...
+                        </div>
+                      ) : notifications.length === 0 ? (
+                        <div className="p-8 text-center flex flex-col items-center justify-center">
+                          <BellIcon className="h-10 w-10 text-gray-300 mb-2" />
+                          <p className="text-sm font-medium text-gray-900">Sin notificaciones</p>
+                          <p className="text-xs text-gray-500">Te avisaremos cuando haya novedades</p>
+                        </div>
+                      ) : (
+                        notifications.map((notification) => (
+                          <div
+                            key={notification.id}
+                            onClick={() => handleNotificationClick(notification)}
+                            className={`p-4 flex gap-3 hover:bg-gray-50 cursor-pointer transition-colors ${
+                              !notification.read ? 'bg-blue-50/30' : ''
+                            }`}
+                          >
+                            <div className="flex-shrink-0 mt-0.5">
+                              {getNotificationIcon(notification.tipo)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className={`text-sm text-gray-900 truncate ${
+                                  !notification.read ? 'font-semibold' : 'font-normal'
+                                }`}>
+                                  {notification.title}
+                                </p>
+                                {!notification.read && (
+                                  <span className="h-1.5 w-1.5 rounded-full bg-blue-600 flex-shrink-0 mt-1.5" />
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">
+                                {notification.message}
+                              </p>
+                              <p className="text-[10px] text-gray-400 mt-1">
+                                {formatRelativeTime(notification.created_at)}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Profile dropdown */}
             <div className="flex items-center gap-x-3 pl-3 border-l border-gray-200">
