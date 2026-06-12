@@ -1,3 +1,4 @@
+from typing import Any
 """
 Area/Department models.
 """
@@ -10,6 +11,8 @@ class Area(models.Model):
     """
     Area/Department within a company.
     """
+    objects: Any
+    DoesNotExist: Any
     
     company = models.ForeignKey(
         'companies.Company',
@@ -77,6 +80,8 @@ class PersonalArea(models.Model):
     """
     Staff/Personnel assigned to an area.
     """
+    objects: Any
+    DoesNotExist: Any
     
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

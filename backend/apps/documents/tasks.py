@@ -3,7 +3,6 @@ Celery tasks for PDF generation.
 """
 
 import logging
-from io import BytesIO
 
 from celery import shared_task
 from django.core.files.base import ContentFile

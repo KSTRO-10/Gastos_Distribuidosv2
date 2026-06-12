@@ -16,9 +16,10 @@ import CotizacionesPage from '@/pages/quotations/CotizacionesPage'
 import CotizacionFormPage from '@/pages/quotations/CotizacionFormPage'
 import CotizacionDetailPage from '@/pages/quotations/CotizacionDetailPage'
 import ComparativaCotizacionesPage from '@/pages/quotations/ComparativaCotizacionesPage'
-import OrdenesPage from '@/pages/orders/OrdenesPage'
-import OrdenFormPage from '@/pages/orders/OrdenFormPage'
-import OrdenDetailPage from '@/pages/orders/OrdenDetailPage'
+import { default as OrdenesPage } from './pages/orders/OrdenesPage'
+import { default as OrdenDetailPage } from './pages/orders/OrdenDetailPage'
+import { default as OrdenFormPage } from './pages/orders/OrdenFormPage'
+import { default as AutorizacionesPage } from './pages/orders/AutorizacionesPage'
 // Inventory pages
 import EntregasPage from '@/pages/inventory/EntregasPage'
 import EntregaFormPage from '@/pages/inventory/EntregaFormPage'
@@ -26,12 +27,22 @@ import EntregaDetailPage from '@/pages/inventory/EntregaDetailPage'
 import SalidasPage from '@/pages/inventory/SalidasPage'
 import SalidaFormPage from '@/pages/inventory/SalidaFormPage'
 import SalidaDetailPage from '@/pages/inventory/SalidaDetailPage'
-// Invoice pages
-import FacturasPage from '@/pages/invoices/FacturasPage'
-import FacturaUploadPage from '@/pages/invoices/FacturaUploadPage'
-import FacturaDetailPage from '@/pages/invoices/FacturaDetailPage'
-import FacturaDistributePage from '@/pages/invoices/FacturaDistributePage'
-import DistribucionRapidaPage from '@/pages/invoices/DistribucionRapidaPage'
+import StockPage from '@/pages/inventory/StockPage'
+import ArticulosPage from '@/pages/inventory/ArticulosPage'
+import AuditoriasPage from '@/pages/inventory/AuditoriasPage'
+import DevolucionesList from '@/pages/inventory/DevolucionesList.page'
+import DevolucionCreate from '@/pages/inventory/DevolucionCreate.page'
+import DevolucionDetail from '@/pages/inventory/DevolucionDetail.page'
+import AjustesList from '@/pages/inventory/AjustesList.page'
+import AjusteCreate from '@/pages/inventory/AjusteCreate.page'
+import AjusteDetail from '@/pages/inventory/AjusteDetail.page'
+// Invoice pages (New Refactor)
+import FacturacionDashboard from '@/pages/invoices/FacturacionDashboard.page'
+import FacturasList from '@/pages/invoices/FacturasList.page'
+import FacturaCreate from '@/pages/invoices/FacturaCreate.page'
+import FacturaDetail from '@/pages/invoices/FacturaDetail.page'
+import FacturaValidation from '@/pages/invoices/FacturaValidation.page'
+import ProgramacionPago from '@/pages/invoices/ProgramacionPago.page'
 // Budget pages
 import PlantillasPage from '@/pages/budget/PlantillasPage'
 import PlantillaDetailPage from '@/pages/budget/PlantillaDetailPage'
@@ -232,6 +243,11 @@ function App() {
             <OrdenFormPage />
           </ProtectedRoute>
         } />
+        <Route path="/autorizaciones" element={
+          <ProtectedRoute allowedRoles={['admin', 'tesoreria']}>
+            <AutorizacionesPage />
+          </ProtectedRoute>
+        } />
 
         {/* Inventory routes - Almacén recibe y distribuye */}
         <Route path="/inventario/entregas" element={
@@ -264,32 +280,85 @@ function App() {
             <SalidaDetailPage />
           </ProtectedRoute>
         } />
+        <Route path="/inventario/stock" element={
+          <ProtectedRoute allowedRoles={['admin', 'almacen']}>
+            <StockPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/inventario/articulos" element={
+          <ProtectedRoute allowedRoles={['admin', 'almacen']}>
+            <ArticulosPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/inventario/auditorias" element={
+          <ProtectedRoute allowedRoles={['admin', 'almacen']}>
+            <AuditoriasPage />
+          </ProtectedRoute>
+        } />
+        
+        {/* Nuevas rutas de Devoluciones y Ajustes */}
+        <Route path="/inventario/devoluciones" element={
+          <ProtectedRoute allowedRoles={['admin', 'almacen', 'area']}>
+            <DevolucionesList />
+          </ProtectedRoute>
+        } />
+        <Route path="/inventario/devoluciones/nueva" element={
+          <ProtectedRoute allowedRoles={['area']}>
+            <DevolucionCreate />
+          </ProtectedRoute>
+        } />
+        <Route path="/inventario/devoluciones/:id" element={
+          <ProtectedRoute allowedRoles={['admin', 'almacen', 'area']}>
+            <DevolucionDetail />
+          </ProtectedRoute>
+        } />
+        <Route path="/inventario/ajustes" element={
+          <ProtectedRoute allowedRoles={['admin', 'almacen']}>
+            <AjustesList />
+          </ProtectedRoute>
+        } />
+        <Route path="/inventario/ajustes/nuevo" element={
+          <ProtectedRoute allowedRoles={['almacen']}>
+            <AjusteCreate />
+          </ProtectedRoute>
+        } />
+        <Route path="/inventario/ajustes/:id" element={
+          <ProtectedRoute allowedRoles={['admin', 'almacen']}>
+            <AjusteDetail />
+          </ProtectedRoute>
+        } />
+
         <Route path="/inventario" element={<Navigate to="/inventario/entregas" replace />} />
 
-        {/* Invoice routes - Tesorería procesa pagos */}
-        <Route path="/facturas" element={
-          <ProtectedRoute allowedRoles={['admin', 'tesoreria']}>
-            <FacturasPage />
+        {/* Invoice routes - Módulo Facturación Refactor */}
+        <Route path="/facturacion" element={
+          <ProtectedRoute allowedRoles={['admin', 'adquisiciones', 'tesoreria']}>
+            <FacturacionDashboard />
           </ProtectedRoute>
         } />
-        <Route path="/facturas/subir" element={
-          <ProtectedRoute allowedRoles={['admin', 'tesoreria']}>
-            <FacturaUploadPage />
+        <Route path="/facturacion/lista" element={
+          <ProtectedRoute allowedRoles={['admin', 'adquisiciones', 'tesoreria']}>
+            <FacturasList />
           </ProtectedRoute>
         } />
-        <Route path="/facturas/distribucion-rapida" element={
-          <ProtectedRoute allowedRoles={['admin', 'tesoreria']}>
-            <DistribucionRapidaPage />
+        <Route path="/facturacion/nueva" element={
+          <ProtectedRoute allowedRoles={['admin', 'adquisiciones']}>
+            <FacturaCreate />
           </ProtectedRoute>
         } />
-        <Route path="/facturas/:id" element={
-          <ProtectedRoute allowedRoles={['admin', 'tesoreria']}>
-            <FacturaDetailPage />
+        <Route path="/facturacion/:id" element={
+          <ProtectedRoute allowedRoles={['admin', 'adquisiciones', 'tesoreria', 'area']}>
+            <FacturaDetail />
           </ProtectedRoute>
         } />
-        <Route path="/facturas/:id/distribuir" element={
+        <Route path="/facturacion/:id/validacion" element={
+          <ProtectedRoute allowedRoles={['admin', 'adquisiciones']}>
+            <FacturaValidation />
+          </ProtectedRoute>
+        } />
+        <Route path="/facturacion/programacion-pago" element={
           <ProtectedRoute allowedRoles={['admin', 'tesoreria']}>
-            <FacturaDistributePage />
+            <ProgramacionPago />
           </ProtectedRoute>
         } />
 

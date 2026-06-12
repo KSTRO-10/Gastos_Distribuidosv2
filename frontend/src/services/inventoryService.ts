@@ -11,6 +11,8 @@ export interface EntregaDetalle {
   id?: number
   detalle_orden: number
   concepto?: string
+  articulo?: number
+  articulo_nombre?: string
   cantidad_recibida: number
   notas?: string
   condicion_buena: boolean
@@ -43,10 +45,10 @@ export interface EntregaBienes {
 
 export interface SalidaDetalle {
   id?: number
-  material: string
+  articulo: number
+  articulo_nombre?: string
   descripcion?: string
   cantidad: number
-  unidad: string
 }
 
 export interface SalidaBienes {
@@ -91,11 +93,61 @@ export interface CreateSalidaData {
   referencia?: string
   notas?: string
   detalles: {
-    material: string
+    articulo: number
     descripcion?: string
     cantidad: number
-    unidad: string
   }[]
+}
+
+export interface Articulo {
+  id: number
+  codigo: string
+  nombre: string
+  descripcion: string
+  unidad_medida: string
+  cog: number
+  cog_descripcion?: string
+  costo_promedio: number
+  is_active: boolean
+}
+
+export interface Stock {
+  id: number
+  almacen: number
+  almacen_nombre?: string
+  articulo: number
+  articulo_nombre?: string
+  articulo_codigo?: string
+  cantidad: number
+  cantidad_reservada: number
+  updated_at: string
+}
+
+export interface AuditoriaDetalle {
+  id?: number
+  auditoria?: number
+  articulo: number
+  articulo_nombre?: string
+  existencia_sistema: number
+  existencia_fisica: number
+  diferencia?: number
+  justificacion?: string
+}
+
+export interface Auditoria {
+  id: number
+  numero: string
+  almacen: number
+  almacen_nombre?: string
+  fecha_inicio: string
+  fecha_cierre?: string
+  estado: string
+  creada_por: number
+  creada_por_nombre?: string
+  autorizada_por?: number
+  autorizada_por_nombre?: string
+  notas: string
+  detalles: AuditoriaDetalle[]
 }
 
 export const inventoryService = {
@@ -184,4 +236,43 @@ export const inventoryService = {
     const response = await api.post(`/inventory/salidas/${id}/confirm/`)
     return response.data
   },
+
+  // Articulos
+  getArticulos: async (): Promise<Articulo[]> => {
+    const response = await api.get('/inventory/articulos/')
+    return extractData(response.data)
+  },
+
+  createArticulo: async (data: Partial<Articulo>): Promise<Articulo> => {
+    const response = await api.post('/inventory/articulos/', data)
+    return response.data
+  },
+
+  // Stock
+  getStock: async (almacenId?: number): Promise<Stock[]> => {
+    const params = almacenId ? { almacen: almacenId } : {}
+    const response = await api.get('/inventory/stock/', { params })
+    return extractData(response.data)
+  },
+
+  // Auditorias
+  getAuditorias: async (): Promise<Auditoria[]> => {
+    const response = await api.get('/inventory/auditorias/')
+    return extractData(response.data)
+  },
+
+  createAuditoria: async (data: Partial<Auditoria>): Promise<Auditoria> => {
+    const response = await api.post('/inventory/auditorias/', data)
+    return response.data
+  },
+
+  aprobarAuditoria: async (id: number): Promise<Auditoria> => {
+    const response = await api.post(`/inventory/auditorias/${id}/aprobar/`)
+    return response.data
+  },
+  
+  completarEntrega: async (id: number, almacenId: number): Promise<EntregaBienes> => {
+    const response = await api.post(`/inventory/entregas/${id}/completar/`, { almacen_id: almacenId })
+    return response.data
+  }
 }

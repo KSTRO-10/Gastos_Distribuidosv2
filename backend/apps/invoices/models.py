@@ -1,3 +1,4 @@
+from typing import Any
 """Invoice models - CFDI 4.0 processing."""
 
 from django.db import models
@@ -6,21 +7,45 @@ from django.conf import settings
 
 class Factura(models.Model):
     """CFDI 4.0 Invoice."""
-    
+
+    objects: Any
+    DoesNotExist: Any
+
     class EstadoChoices(models.TextChoices):
-        PENDIENTE = 'pendiente', 'Pendiente de procesar'
-        PROCESANDO = 'procesando', 'Procesando'
-        PROCESADA = 'procesada', 'Procesada'
-        ERROR = 'error', 'Error en procesamiento'
-        DISTRIBUIDA = 'distribuida', 'Distribuida'
-    
+        PENDIENTE = "pendiente", "Pendiente de procesar"
+        PROCESANDO = "procesando", "Procesando"
+        PROCESADA = "procesada", "Procesada"
+        VALIDANDO = "validando", "En Validación"
+        RECHAZADA = "rechazada", "Rechazada"
+        AUTORIZADA = "autorizada", "Autorizada CXP"
+        PROGRAMADA = "programada", "Pago Programado"
+        PAGADA = "pagada", "Pagada"
+        ERROR = "error", "Error en procesamiento"
+        DISTRIBUIDA = "distribuida", "Distribuida (Legacy)"
+
+    # Relations
     proveedor = models.ForeignKey(
         'companies.Proveedor',
         on_delete=models.PROTECT,
         related_name='facturas',
-        verbose_name='Proveedor',
         null=True,
         blank=True  # Will be auto-detected from XML RFC
+    )
+    orden_compra = models.ForeignKey(
+        'orders.OrdenCompra',
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='facturas',
+        verbose_name='Orden de Compra'
+    )
+    recepcion = models.ForeignKey(
+        'inventory.EntregaBienes',
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='facturas_asociadas',
+        verbose_name='Recepción'
     )
     
     # XML File
@@ -92,11 +117,13 @@ class Factura(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.uuid_cfdi or 'Pendiente'} - {self.proveedor.razon_social}"
+        return f"{self.uuid_cfdi or 'Pendiente'} - {self.proveedor.razon_social if self.proveedor else 'Sin proveedor'}"
 
 
 class FacturaDetalle(models.Model):
     """Invoice line item (concepto)."""
+    objects: Any
+    DoesNotExist: Any
     
     factura = models.ForeignKey(
         Factura,
@@ -132,6 +159,8 @@ class FacturaDetalle(models.Model):
 
 class DistribucionGasto(models.Model):
     """Expense distribution to areas."""
+    objects: Any
+    DoesNotExist: Any
     
     factura = models.ForeignKey(
         Factura,
@@ -162,7 +191,7 @@ class DistribucionGasto(models.Model):
     
     monto = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='Monto')
     porcentaje = models.DecimalField(max_digits=5, decimal_places=2, default=100, verbose_name='Porcentaje')
-    notas = models.TextField(blank=True, verbose_name='Notas')
+    notas = models.TextField(blank=True, verbose_name='Notas')  # Wait, wait... notes or notas? Let's check: in migration: it is not defined. In our viewed file it was 'notas' on line 172 but in view_file above it had: 'notas = models.TextField(blank=True, verbose_name="Notas")' on line 172. Let's make it notas.
     
     # Audit
     created_by = models.ForeignKey(
@@ -179,3 +208,113 @@ class DistribucionGasto(models.Model):
 
     def __str__(self):
         return f"{self.factura.uuid_cfdi} -> {self.area.name}: ${self.monto}"
+
+
+class LotePago(models.Model):
+    """Lote de Pago"""
+
+    objects: Any
+    DoesNotExist: Any
+
+    fecha_pago = models.DateField(verbose_name="Fecha de pago programada")
+    cuenta_origen = models.CharField(max_length=50, verbose_name="Cuenta origen")
+    estado = models.CharField(
+        max_length=20,
+        choices=[
+            ("programado", "Programado"),
+            ("pagado", "Pagado"),
+            ("cancelado", "Cancelado"),
+        ],
+        default="programado",
+        verbose_name="Estado",
+    )
+    notas = models.TextField(blank=True, verbose_name="Notas")
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="lotes_pago_creados",
+        verbose_name="Creado por",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Lote de Pago"
+        verbose_name_plural = "Lotes de Pago"
+
+
+class Pago(models.Model):
+    """Pago"""
+
+    objects: Any
+    DoesNotExist: Any
+
+    factura = models.ForeignKey(
+        Factura,
+        on_delete=models.PROTECT,
+        related_name="pagos",
+        verbose_name="Factura",
+    )
+    lote = models.ForeignKey(
+        LotePago,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="pagos",
+        verbose_name="Lote",
+    )
+    monto = models.DecimalField(
+        max_digits=15, decimal_places=2, verbose_name="Monto Pagado"
+    )
+    fecha_pago = models.DateField(verbose_name="Fecha de Pago Real")
+    comprobante = models.FileField(
+        upload_to="pagos/comprobantes/",
+        blank=True,
+        null=True,
+        verbose_name="Comprobante de Pago (PDF/XML)",
+    )
+    referencia = models.CharField(
+        max_length=100, blank=True, verbose_name="Referencia de Transacción"
+    )
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="pagos_registrados",
+        verbose_name="Registrado por",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Pago"
+        verbose_name_plural = "Pagos"
+
+
+class FacturaHistorial(models.Model):
+    """Historial de Factura"""
+
+    objects: Any
+    DoesNotExist: Any
+
+    factura = models.ForeignKey(
+        Factura,
+        on_delete=models.CASCADE,
+        related_name="historial",
+        verbose_name="Factura",
+    )
+    estado_anterior = models.CharField(
+        max_length=20, blank=True, verbose_name="Estado Anterior"
+    )
+    estado_nuevo = models.CharField(max_length=20, verbose_name="Estado Nuevo")
+    comentarios = models.TextField(blank=True, verbose_name="Comentarios")
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="eventos_factura",
+        verbose_name="Usuario",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Historial de Factura"
+        verbose_name_plural = "Historiales de Factura"
+        ordering = ["created_at"]

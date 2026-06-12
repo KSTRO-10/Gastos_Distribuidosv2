@@ -12,7 +12,7 @@ from .serializers import (
     SolicitudMaterialCreateSerializer,
     DetalleMaterialSerializer,
 )
-from apps.accounts.permissions import IsAdmin, IsArea, IsAdquisiciones
+from apps.accounts.permissions import IsAdmin
 
 
 class CogViewSet(viewsets.ModelViewSet):

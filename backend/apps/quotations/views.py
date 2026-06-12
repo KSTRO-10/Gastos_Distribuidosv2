@@ -8,7 +8,7 @@ from .serializers import (
     CotizacionMaterialSerializer,
     CotizacionMaterialCreateSerializer,
 )
-from apps.accounts.permissions import IsProveedor, IsAdquisiciones, IsTesoreria
+from apps.accounts.permissions import IsAdquisiciones, IsTesoreria
 
 
 class CotizacionMaterialViewSet(viewsets.ModelViewSet):
@@ -60,7 +60,6 @@ class CotizacionMaterialViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[IsAdquisiciones])
     def create_order(self, request, pk=None):
         """Generate purchase order from authorized quotation."""
-        from decimal import Decimal
         from django.utils import timezone
         from apps.orders.models import OrdenCompra, DetalleOrden
         from apps.orders.serializers import OrdenCompraSerializer

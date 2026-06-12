@@ -1,0 +1,15 @@
+{
+  "venvPath": ".",
+  "venv": "venv",
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+  "reportMissingModuleSource": "none",
+  "reportMissingTypeStubs": "none",
+  "exclude": [
+    "**/__pyrefly_virtual__/**",
+    "venv",
+    "django",
+    "rest_framework"
+  ]
+}

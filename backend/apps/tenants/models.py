@@ -1,3 +1,4 @@
+from typing import Any
 """
 Tenant models for multi-tenancy.
 """
@@ -97,6 +98,8 @@ class SolicitudGubernamental(models.Model):
     Government registration request to become a tenant.
     Admin must approve before creating the tenant.
     """
+    objects: Any
+    DoesNotExist: Any
     
     class EstadoChoices(models.TextChoices):
         PENDIENTE = 'pendiente', 'Pendiente'

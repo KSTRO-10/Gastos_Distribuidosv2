@@ -15,19 +15,33 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginCredentials>()
+  } = useForm<LoginCredentials>({
+    defaultValues: {
+      email: 'admin@gastos.local',
+      password: 'admin123',
+    }
+  })
 
   const onSubmit = async (data: LoginCredentials) => {
     setLoading(true)
     try {
-      const response = await authService.login(data)
+      const sanitizedData = {
+        ...data,
+        email: data.email.trim().toLowerCase(),
+      }
+      const response = await authService.login(sanitizedData)
       setAuth(response.user, response.access, response.refresh)
       toast.success('¡Bienvenido!')
       // Redirigir según el rol: proveedores a /portal, otros a /dashboard
       const redirectTo = response.user.role === 'proveedor' ? '/portal' : '/dashboard'
       navigate(redirectTo)
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Error al iniciar sesión')
+      console.error('Login error:', error)
+      const errorMsg = error.response?.data?.error?.details?.detail ||
+                       error.response?.data?.detail ||
+                       error.message ||
+                       'Error al iniciar sesión'
+      toast.error(errorMsg)
     } finally {
       setLoading(false)
     }
@@ -152,6 +166,31 @@ export default function LoginPage() {
           )}
         </button>
       </form>
+
+      <div className="demo-info-box">
+        <span className="info-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="info-icon">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
+          </svg>
+          Credenciales de Acceso Demo
+        </span>
+        <div className="info-grid">
+          <div className="info-row">
+            <span className="info-label">Administrador:</span>
+            <code className="info-value">admin@gastos.local</code>
+            <span className="info-sep">/</span>
+            <code className="info-pass">admin123</code>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Otros Roles:</span>
+            <code className="info-value">[rol]1@gastos.local</code>
+            <span className="info-sep">/</span>
+            <code className="info-pass">test123</code>
+          </div>
+        </div>
+      </div>
 
       {/* Footer del formulario */}
       <div className="login-footer">
@@ -356,6 +395,76 @@ export default function LoginPage() {
 
         .back-link:hover {
           color: #6366f1;
+        }
+
+        /* Demo credentials box styling */
+        .demo-info-box {
+          margin-top: 1.5rem;
+          padding: 1rem;
+          background-color: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .info-title {
+          font-size: 0.8125rem;
+          font-weight: 700;
+          color: #475569;
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .info-icon {
+          color: #6366f1;
+        }
+
+        .info-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 0.375rem;
+        }
+
+        .info-row {
+          font-size: 0.8125rem;
+          color: #64748b;
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 0.25rem;
+        }
+
+        .info-label {
+          font-weight: 600;
+          min-width: 90px;
+          color: #334155;
+        }
+
+        .info-value {
+          color: #0f172a;
+          background-color: #e2e8f0;
+          padding: 1px 4px;
+          border-radius: 4px;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        .info-sep {
+          color: #cbd5e1;
+          margin: 0 2px;
+        }
+
+        .info-pass {
+          color: #4f46e5;
+          font-weight: 600;
+          background-color: #e0e7ff;
+          padding: 1px 4px;
+          border-radius: 4px;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
       `}</style>
     </div>

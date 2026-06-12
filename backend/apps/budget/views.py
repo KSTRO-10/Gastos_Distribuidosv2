@@ -18,7 +18,7 @@ from .serializers import (
     PlantillaPresupuestalListSerializer,
     ItemClavePresSerializer,
 )
-from apps.accounts.permissions import IsAdmin, IsTesoreria
+from apps.accounts.permissions import IsTesoreria
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +79,6 @@ class PlantillaPresupuestalViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Filtra por tenant del usuario autenticado."""
-        user = self.request.user
         queryset = super().get_queryset()
 
         # Filtrar por tenant — obtenemos el tenant desde la conexión o configuración
@@ -182,7 +181,6 @@ class PlantillaPresupuestalViewSet(viewsets.ModelViewSet):
             ws = wb.active
 
             # Encabezados en fila 4, datos desde fila 5
-            HEADER_ROW = 4
             DATA_START_ROW = 5
 
             # Mapeo de columnas por posición (1-indexed)

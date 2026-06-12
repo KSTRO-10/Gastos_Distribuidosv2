@@ -1,12 +1,14 @@
+from typing import Any
 """Quotation models."""
 
 from decimal import Decimal
 from django.db import models
-from django.conf import settings
 
 
 class CotizacionMaterial(models.Model):
     """Quote from a supplier for a material request."""
+    objects: Any
+    DoesNotExist: Any
     
     class EstadoChoices(models.TextChoices):
         PENDIENTE = 'pendiente', 'Pendiente'
@@ -84,6 +86,8 @@ class CotizacionMaterial(models.Model):
 
 
 class CotizacionDetalle(models.Model):
+    objects: Any
+    DoesNotExist: Any
 
     
     cotizacion = models.ForeignKey(

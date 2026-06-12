@@ -1,3 +1,4 @@
+from typing import Any
 """Document models - PDF generation and storage."""
 
 from django.db import models
@@ -8,6 +9,8 @@ from django.contrib.contenttypes.models import ContentType
 
 class PDFDocument(models.Model):
     """Generated PDF document."""
+    objects: Any
+    DoesNotExist: Any
     
     class TipoChoices(models.TextChoices):
         SOLICITUD = 'solicitud', 'Solicitud de Material'
@@ -60,6 +63,8 @@ class PDFDocument(models.Model):
 
 class Media(models.Model):
     """Generic media file storage."""
+    objects: Any
+    DoesNotExist: Any
     
     file = models.FileField(upload_to='media/files/', verbose_name='Archivo')
     original_name = models.CharField(max_length=255, verbose_name='Nombre original')
@@ -86,4 +91,4 @@ class Media(models.Model):
         verbose_name_plural = 'Archivos Media'
 
     def __str__(self):
-        return self.original_name
+        return str(self.original_name)

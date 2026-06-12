@@ -30,7 +30,7 @@ def get_app_root_dir():
 def get_bundle_dir():
     """Internal directory with bundled files."""
     if getattr(sys, 'frozen', False):
-        return Path(sys._MEIPASS)
+        return Path(getattr(sys, '_MEIPASS'))
     return Path(__file__).resolve().parent
 
 
@@ -74,7 +74,7 @@ def compare_versions(current_str, latest_str):
 
 
 def download_file(url, dest_path):
-    print(f'[UPDATER] Descargando actualizacion...')
+    print('[UPDATER] Descargando actualizacion...')
     req = urllib.request.Request(
         url, headers={'User-Agent': 'GastosDistribuidos-Updater/1.0'}
     )
@@ -119,11 +119,17 @@ def apply_update(app_dir, update_dir):
     )
 
     update_bat_path.write_text(bat_content, encoding='ascii')
-    print(f'[UPDATER] Actualizacion preparada. Instalando...')
+    print('[UPDATER] Actualizacion preparada. Instalando...')
+
+    creationflags = 0
+    if sys.platform == 'win32':
+        creation_new_console = getattr(subprocess, 'CREATE_NEW_CONSOLE', 0x00000010)
+        detached_process = getattr(subprocess, 'DETACHED_PROCESS', 0x00000008)
+        creationflags = creation_new_console | detached_process
 
     subprocess.Popen(
         str(update_bat_path),
-        creationflags=subprocess.CREATE_NEW_CONSOLE | subprocess.DETACHED_PROCESS,
+        creationflags=creationflags,
         close_fds=True,
     )
 

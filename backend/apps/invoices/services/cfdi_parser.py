@@ -3,7 +3,6 @@ CFDI 4.0 XML Parser Service.
 """
 
 import logging
-from datetime import datetime
 from decimal import Decimal
 from typing import Any
 

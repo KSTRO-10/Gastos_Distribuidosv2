@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm, useFieldArray } from 'react-hook-form'
-import { inventoryService, CreateSalidaData } from '../../services/inventoryService'
+import { inventoryService, CreateSalidaData, Articulo } from '../../services/inventoryService'
 import { areaService, Area } from '../../services/areaService'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
@@ -14,10 +14,9 @@ interface SalidaFormData {
   referencia: string
   notas: string
   detalles: {
-    material: string
+    articulo: string
     descripcion: string
     cantidad: number
-    unidad: string
   }[]
 }
 
@@ -29,6 +28,7 @@ export default function SalidaFormPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [areas, setAreas] = useState<Area[]>([])
+  const [articulos, setArticulos] = useState<Articulo[]>([])
   
   const { register, control, handleSubmit, formState: { errors } } = useForm<SalidaFormData>({
     defaultValues: {
@@ -37,7 +37,7 @@ export default function SalidaFormPage() {
       fecha: new Date().toISOString().slice(0, 16),
       referencia: '',
       notas: '',
-      detalles: [{ material: '', descripcion: '', cantidad: 1, unidad: 'PZA' }]
+      detalles: [{ articulo: '', descripcion: '', cantidad: 1 }]
     }
   })
   
@@ -47,15 +47,19 @@ export default function SalidaFormPage() {
   })
 
   useEffect(() => {
-    loadAreas()
+    loadData()
   }, [])
 
-  const loadAreas = async () => {
+  const loadData = async () => {
     try {
-      const data = await areaService.getAreas()
-      setAreas(data)
+      const [areasData, articulosData] = await Promise.all([
+        areaService.getAreas(),
+        inventoryService.getArticulos()
+      ])
+      setAreas(areasData)
+      setArticulos(articulosData.filter(a => a.is_active))
     } catch (err) {
-      console.error('Error al cargar áreas:', err)
+      console.error('Error al cargar datos:', err)
     }
   }
 
@@ -70,7 +74,13 @@ export default function SalidaFormPage() {
         fecha: data.fecha,
         referencia: data.referencia,
         notas: data.notas,
-        detalles: data.detalles.filter(d => d.material && d.cantidad > 0)
+        detalles: data.detalles
+          .filter(d => d.articulo && d.cantidad > 0)
+          .map(d => ({
+            articulo: Number(d.articulo),
+            descripcion: d.descripcion,
+            cantidad: d.cantidad
+          }))
       }
       
       if (isEditing) {
@@ -90,7 +100,7 @@ export default function SalidaFormPage() {
   }
 
   const addDetalle = () => {
-    append({ material: '', descripcion: '', cantidad: 1, unidad: 'PZA' })
+    append({ articulo: '', descripcion: '', cantidad: 1 })
   }
 
   return (
@@ -164,9 +174,9 @@ export default function SalidaFormPage() {
         {/* Detalles */}
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Materiales</h2>
+            <h2 className="text-lg font-semibold">Artículos a Entregar</h2>
             <Button type="button" size="sm" onClick={addDetalle}>
-              + Agregar Material
+              + Agregar Artículo
             </Button>
           </div>
           
@@ -174,17 +184,22 @@ export default function SalidaFormPage() {
             {fields.map((field, index) => (
               <div key={field.id} className="flex gap-4 items-start border-b pb-4">
                 <div className="flex-1">
-                  <Input
-                    label="Material *"
-                    {...register(`detalles.${index}.material`, { required: 'Requerido' })}
-                    placeholder="Nombre del material"
+                  <Select
+                    label="Artículo *"
+                    {...register(`detalles.${index}.articulo`, { required: 'Requerido' })}
+                    error={errors.detalles?.[index]?.articulo?.message}
+                    options={articulos.map(a => ({
+                      value: a.id,
+                      label: `${a.codigo} - ${a.nombre}`
+                    }))}
+                    placeholder="Seleccione artículo..."
                   />
                 </div>
                 <div className="flex-1">
                   <Input
-                    label="Descripción"
+                    label="Notas/Descripción"
                     {...register(`detalles.${index}.descripcion`)}
-                    placeholder="Descripción adicional"
+                    placeholder="Opcional"
                   />
                 </div>
                 <div className="w-24">
@@ -198,13 +213,7 @@ export default function SalidaFormPage() {
                       valueAsNumber: true,
                       min: 0.01
                     })}
-                  />
-                </div>
-                <div className="w-24">
-                  <Input
-                    label="Unidad *"
-                    {...register(`detalles.${index}.unidad`, { required: 'Requerido' })}
-                    placeholder="PZA"
+                    error={errors.detalles?.[index]?.cantidad?.message}
                   />
                 </div>
                 <div className="pt-6">

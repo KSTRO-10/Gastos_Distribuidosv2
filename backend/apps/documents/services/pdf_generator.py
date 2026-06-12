@@ -1,10 +1,8 @@
 import logging
 from io import BytesIO
 from pathlib import Path
-from django.utils import timezone
 
 from django.template import loader
-from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -448,10 +446,8 @@ def generate_expediente_completo_pdf(solicitud_gasto_id, tenant):
     from apps.treasury.models import SolicitudGasto
     from apps.invoices.models import DistribucionGasto
     from apps.orders.models import (
-        OrdenCompra, SolicitudAutorizacion, AutorizacionPresupuestal,
+        SolicitudAutorizacion,
     )
-    from apps.procurement.models import SolicitudMaterial
-    from apps.quotations.models import CotizacionMaterial
     from apps.inventory.models import EntregaBienes
 
     pdf_parts = []

@@ -1,3 +1,4 @@
+from typing import Any
 """
 User and Role models for authentication and authorization.
 """
@@ -10,6 +11,8 @@ class Role(models.Model):
     """
     Role model for RBAC (Role-Based Access Control).
     """
+    objects: Any
+    DoesNotExist: Any
     
     class RoleType(models.TextChoices):
         ADMIN = 'admin', 'Administrador'
@@ -77,6 +80,8 @@ class User(AbstractUser):
     """
     Custom User model with role-based access control.
     """
+    objects: Any
+    DoesNotExist: Any
     
     email = models.EmailField(unique=True, verbose_name='Correo electrónico')
     full_name = models.CharField(max_length=255, blank=True, verbose_name='Nombre completo')

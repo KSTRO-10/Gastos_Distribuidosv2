@@ -7,7 +7,6 @@ from rest_framework.permissions import IsAuthenticated
 from .models import SolicitudAutorizacion, AutorizacionPresupuestal, OrdenCompra
 from .serializers import (
     SolicitudAutorizacionSerializer,
-    AutorizacionPresupuestalSerializer,
     OrdenCompraSerializer,
     OrdenCompraCreateSerializer,
 )

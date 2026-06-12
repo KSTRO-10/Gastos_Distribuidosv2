@@ -121,7 +121,7 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(f'\n{"=" * 60}')
-        self.stdout.write(f'  Carga de Catálogo COG')
+        self.stdout.write('  Carga de Catálogo COG')
         self.stdout.write(f'  Archivo: {csv_path}')
         if dry_run:
             self.stdout.write(self.style.WARNING('  MODO SIMULACIÓN (--dry-run): No se escribirá en la BD'))
@@ -239,7 +239,7 @@ class Command(BaseCommand):
         # Resumen
         total_db = Cog.objects.count() if not dry_run else '(sin cambios - dry run)'
         self.stdout.write(f'\n{"=" * 60}')
-        self.stdout.write(self.style.SUCCESS(f'  Resumen:'))
+        self.stdout.write(self.style.SUCCESS('  Resumen:'))
         self.stdout.write(f'    Creados:      {created_count}')
         self.stdout.write(f'    Actualizados: {updated_count}')
         self.stdout.write(f'    Sin cambios:  {unchanged_count}')

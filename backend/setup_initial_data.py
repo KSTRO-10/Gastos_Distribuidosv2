@@ -3,7 +3,6 @@
 Script para crear datos iniciales del sistema.
 """
 import os
-import sys
 import django
 from django.conf import settings
 from django.db import connection
@@ -45,7 +44,7 @@ def create_roles():
     ]
     for code, description in roles:
         role, created = Role.objects.get_or_create(
-            name=code, 
+            name=code,
             defaults={'description': description}
         )
         status = 'creado' if created else 'ya existe'
@@ -105,6 +104,7 @@ def create_tenant():
     )
     status = 'creado' if created else 'ya existe'
     print(f'  Tenant [{tenant.schema_name}]: {status}')
+
 
 if __name__ == '__main__':
     print('=' * 50)

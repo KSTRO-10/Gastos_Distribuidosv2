@@ -93,7 +93,7 @@ def wait_for_server(timeout=30):
 
 def open_pywebview():
     try:
-        import webview
+        import webview  # type: ignore
     except ImportError:
         print('[APP] pywebview no instalado. Abriendo en navegador...')
         import webbrowser
@@ -114,8 +114,8 @@ def open_pywebview():
         def quit_app(self):
             os._exit(0)
 
-    print(f'[APP] Abriendo ventana de la aplicacion...')
-    window = webview.create_window(
+    print('[APP] Abriendo ventana de la aplicacion...')
+    webview.create_window(
         title=APP_TITLE,
         url=APP_URL,
         width=1280,

@@ -17,14 +17,14 @@ import {
   BuildingStorefrontIcon,
   ChartBarIcon,
   DocumentPlusIcon,
-  BoltIcon,
   ArchiveBoxIcon,
   Cog6ToothIcon,
   BanknotesIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
   ExclamationCircleIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  ClipboardDocumentCheckIcon
 } from '@heroicons/react/24/outline'
 
 interface NavItem {
@@ -55,16 +55,22 @@ const navigation: NavItem[] = [
   { name: 'Órdenes de Compra', href: '/ordenes', icon: ShoppingCartIcon, roles: ['admin', 'adquisiciones'] },
 
   // Inventario/Entregas: almacén recibe mercancía del proveedor
-  { name: 'Inventario', href: '/inventario', icon: TruckIcon, roles: ['admin', 'almacen'] },
+  { name: 'Entradas/Salidas', href: '/inventario', icon: TruckIcon, roles: ['admin', 'almacen'] },
 
-  // Facturas/Pagos: tesorería procesa pagos a proveedores
-  { name: 'Facturas', href: '/facturas', icon: ReceiptPercentIcon, roles: ['admin', 'tesoreria'] },
+  // Stock: almacén revisa existencias
+  { name: 'Existencias', href: '/inventario/stock', icon: ArchiveBoxIcon, roles: ['admin', 'almacen'] },
+
+  // Catálogo de almacén
+  { name: 'Catálogo de Artículos', href: '/inventario/articulos', icon: DocumentTextIcon, roles: ['admin', 'almacen'] },
+
+  // Auditorías de inventario
+  { name: 'Auditorías', href: '/inventario/auditorias', icon: ClipboardDocumentCheckIcon, roles: ['admin', 'almacen'] },
+
+  // Facturación: Dashboard central de Cuentas por Pagar
+  { name: 'Facturación', href: '/facturacion', icon: ReceiptPercentIcon, roles: ['admin', 'adquisiciones', 'tesoreria'] },
 
   // Claves Presupuestarias: plantillas de claves presupuestales
   { name: 'Claves Presupuestarias', href: '/budget/plantillas', icon: BanknotesIcon, roles: ['admin', 'tesoreria'] },
-
-  // Distribución Rápida: subir XML y distribuir gastos directamente
-  { name: 'Dist. Rápida', href: '/facturas/distribucion-rapida', icon: BoltIcon, roles: ['admin', 'tesoreria'] },
 ]
 
 // Navegación para proveedores
@@ -190,17 +196,35 @@ export default function MainLayout() {
     item => !item.roles || (user && item.roles.includes(user.role))
   )
 
+  const isActive = (pathname: string, href: string) => {
+    if (pathname === href) return true
+    if (href === '/' || href === '/dashboard') return false
+
+    // Caso especial para '/inventario' (Entradas/Salidas) para no colisionar con stock, articulos, etc.
+    if (href === '/inventario') {
+      return pathname.startsWith('/inventario/entregas') ||
+             pathname.startsWith('/inventario/salidas') ||
+             pathname.startsWith('/inventario/devoluciones') ||
+             pathname.startsWith('/inventario/ajustes')
+    }
+
+    return pathname.startsWith(href + '/')
+  }
+
   const renderNavItem = (item: NavItem) => (
     <Link
       key={item.name}
       to={item.href}
       onClick={() => setSidebarOpen(false)}
-      className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${location.pathname === item.href
-        ? 'bg-primary-100 text-primary-900'
+      className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${isActive(location.pathname, item.href)
+        ? 'bg-blue-100 text-blue-900'
         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
         }`}
     >
-      <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+      <item.icon className={`mr-3 h-5 w-5 flex-shrink-0 transition-colors ${isActive(location.pathname, item.href)
+        ? 'text-blue-600'
+        : 'text-gray-400 group-hover:text-gray-600'
+        }`} />
       {item.name}
     </Link>
   )
@@ -212,7 +236,7 @@ export default function MainLayout() {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
         <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
           <div className="flex h-16 items-center justify-between px-4">
-            <span className="text-xl font-bold text-primary-600">Gastos Distribuidos</span>
+            <span className="text-xl font-bold text-blue-600">Gastos Distribuidos</span>
             <button
               onClick={() => setSidebarOpen(false)}
               title="Cerrar menú"
@@ -254,12 +278,12 @@ export default function MainLayout() {
               <Link
                 key={item.name}
                 to={item.href}
-                className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${location.pathname === item.href || location.pathname.startsWith(item.href + '/')
+                className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(location.pathname, item.href)
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                   : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
                   }`}
               >
-                <item.icon className={`mr-3 h-5 w-5 flex-shrink-0 transition-colors ${location.pathname === item.href || location.pathname.startsWith(item.href + '/')
+                <item.icon className={`mr-3 h-5 w-5 flex-shrink-0 transition-colors ${isActive(location.pathname, item.href)
                   ? 'text-white'
                   : 'text-slate-400 group-hover:text-white'
                   }`} />
@@ -278,12 +302,12 @@ export default function MainLayout() {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${location.pathname === item.href
+                    className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(location.pathname, item.href)
                       ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                       : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
                       }`}
                   >
-                    <item.icon className={`mr-3 h-5 w-5 flex-shrink-0 transition-colors ${location.pathname === item.href
+                    <item.icon className={`mr-3 h-5 w-5 flex-shrink-0 transition-colors ${isActive(location.pathname, item.href)
                       ? 'text-white'
                       : 'text-slate-400 group-hover:text-white'
                       }`} />

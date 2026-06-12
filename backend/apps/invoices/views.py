@@ -13,7 +13,6 @@ from .serializers import (
     FacturaSerializer,
     FacturaUploadSerializer,
     FacturaDetalleSerializer,
-    DistribucionGastoSerializer,
     DistributeRequestSerializer,
     FacturaQuickUploadSerializer,
 )
@@ -92,6 +91,21 @@ class FacturaViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(proveedor=proveedor)
             else:
                 queryset = queryset.none()
+        elif hasattr(user, 'is_area') and user.is_area:
+            area_ids = []
+            if user.area_id:
+                area_ids.append(user.area_id)
+            if hasattr(user, 'area_assignments'):
+                area_ids.extend(user.area_assignments.values_list('area_id', flat=True))
+            
+            area_ids = list(set(area_ids))
+            
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(distribuciones__area_id__in=area_ids) |
+                Q(orden_compra__created_by__area_id__in=area_ids) |
+                Q(orden_compra__created_by=user)
+            ).distinct()
         
         status_filter = self.request.query_params.get('status')
         if status_filter:
@@ -102,6 +116,24 @@ class FacturaViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(proveedor_id=proveedor_id)
         
         return queryset
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.status == Factura.EstadoChoices.PAGADA:
+            return Response(
+                {"error": "No se puede modificar una factura que ya ha sido pagada."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().update(request, *args, **kwargs)
+        
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.status == Factura.EstadoChoices.PAGADA:
+            return Response(
+                {"error": "No se puede modificar una factura que ya ha sido pagada."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().partial_update(request, *args, **kwargs)
     
     @action(detail=False, methods=['post'])
     def upload(self, request):
@@ -117,7 +149,7 @@ class FacturaViewSet(viewsets.ModelViewSet):
             message = 'Factura recibida. El procesamiento se realizará en segundo plano.'
         except Exception:
             # Celery/Redis not available, process synchronously
-            process_cfdi_xml(factura.id)
+            process_cfdi_xml.apply(args=[factura.id])
             factura.refresh_from_db()
             message = 'Factura procesada correctamente.'
         
@@ -135,7 +167,7 @@ class FacturaViewSet(viewsets.ModelViewSet):
         """Get parsed JSON data for a factura."""
         factura = self.get_object()
         
-        if factura.status != Factura.EstadoChoices.PROCESADA and factura.status != Factura.EstadoChoices.DISTRIBUIDA:
+        if factura.status not in [Factura.EstadoChoices.PROCESADA, Factura.EstadoChoices.DISTRIBUIDA]:
             return Response(
                 {'error': 'La factura aún no ha sido procesada.'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -159,7 +191,7 @@ class FacturaViewSet(viewsets.ModelViewSet):
         
         # Add created_by to each distribution
         distributions = serializer.validated_data['distributions']
-
+ 
         # Verificar presupuesto (advertencia, no bloqueo)
         force = request.data.get('force', False)
         if not force:
@@ -169,7 +201,7 @@ class FacturaViewSet(viewsets.ModelViewSet):
                     'needs_confirmation': True,
                     'warnings': warnings,
                 })
-
+ 
         for dist in distributions:
             dist['created_by_id'] = request.user.id
         
@@ -208,11 +240,11 @@ class FacturaViewSet(viewsets.ModelViewSet):
             message = 'Reprocesamiento iniciado.'
         except Exception:
             # Celery/Redis not available, process synchronously
-            process_cfdi_xml(factura.id)
+            process_cfdi_xml.apply(args=[factura.id])
             message = 'Factura reprocesada correctamente.'
         
         return Response({'message': message})
-
+ 
     @action(detail=False, methods=['post'], url_path='upload-and-process')
     def upload_and_process(self, request):
         """
@@ -225,7 +257,7 @@ class FacturaViewSet(viewsets.ModelViewSet):
         factura = serializer.save(uploaded_by=request.user)
         
         # Always process synchronously for quick flow
-        result = process_cfdi_xml(factura.id)
+        process_cfdi_xml.apply(args=[factura.id])
         factura.refresh_from_db()
         
         if factura.status == Factura.EstadoChoices.ERROR:
@@ -247,6 +279,89 @@ class FacturaViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_201_CREATED
         )
+
+    @action(detail=True, methods=['post'])
+    def validar(self, request, pk=None):
+        """3-Way Match validation approval."""
+        factura = self.get_object()
+        aprobado = request.data.get('aprobado', False)
+        if aprobado:
+            factura.status = Factura.EstadoChoices.AUTORIZADA
+        else:
+            factura.status = Factura.EstadoChoices.RECHAZADA
+        factura.save()
+        return Response(FacturaSerializer(factura).data)
+
+    @action(detail=False, methods=['post'])
+    def programar_pago_masivo(self, request):
+        """Schedule a massive payment for invoices."""
+        factura_ids = request.data.get('factura_ids', [])
+        fecha_pago = request.data.get('fecha_pago')
+        cuenta_origen = request.data.get('cuenta_origen')
+        
+        if not factura_ids or not fecha_pago or not cuenta_origen:
+            return Response(
+                {"error": "Faltan campos obligatorios (factura_ids, fecha_pago, cuenta_origen)."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        from django.db import transaction
+        from .models import LotePago
+        
+        with transaction.atomic():
+            LotePago.objects.create(
+                fecha_pago=fecha_pago,
+                cuenta_origen=cuenta_origen,
+                creado_por=request.user,
+                estado='programado'
+            )
+            
+            facturas = Factura.objects.filter(id__in=factura_ids)
+            for factura in facturas:
+                factura.status = Factura.EstadoChoices.PROGRAMADA
+                factura.save()
+                
+        return Response({"message": "Pago programado exitosamente."})
+
+    @action(detail=True, methods=['post'])
+    def registrar_pago(self, request, pk=None):
+        """Register a payment for the invoice."""
+        factura = self.get_object()
+        if factura.status != Factura.EstadoChoices.PROGRAMADA:
+            return Response(
+                {"error": "La factura debe estar en estado programada para registrar pago."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        monto = request.data.get('monto')
+        fecha_pago = request.data.get('fecha_pago')
+        referencia = request.data.get('referencia', '')
+        comprobante = request.FILES.get('comprobante')
+        
+        if not monto or not fecha_pago:
+            return Response(
+                {"error": "Monto y fecha de pago son requeridos."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        from django.db import transaction
+        from .models import Pago
+        
+        with transaction.atomic():
+            Pago.objects.create(
+                factura=factura,
+                monto=Decimal(str(monto)),
+                fecha_pago=fecha_pago,
+                referencia=referencia,
+                comprobante=comprobante,
+                creado_por=request.user
+            )
+            
+            factura.status = Factura.EstadoChoices.PAGADA
+            factura.save()
+            
+        return Response({"message": "Pago registrado exitosamente."}, status=status.HTTP_201_CREATED)
+
 
 
 class FacturaDetalleViewSet(viewsets.ReadOnlyModelViewSet):

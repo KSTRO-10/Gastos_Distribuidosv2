@@ -6,20 +6,15 @@ import {
   EyeIcon,
   PencilIcon,
   TrashIcon,
-  PaperAirplaneIcon,
-  XCircleIcon,
-  DocumentArrowUpIcon,
-  DocumentTextIcon,
   PrinterIcon,
-  IdentificationIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  ArrowPathIcon,
+  PaperAirplaneIcon,
+  DocumentArrowUpIcon,
+  XCircleIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline'
 import { Button, Table, Modal, PageHeader } from '@/components/ui'
 import { procurementService, SolicitudMaterial } from '@/services/procurementService'
 import { documentService } from '@/services/documentService'
-import { userService } from '@/services/userService'
 import { useAuthStore } from '@/stores/authStore'
 
 const estadoColors: Record<string, string> = {
@@ -39,7 +34,7 @@ const estadoColors: Record<string, string> = {
 
 export default function SolicitudesPage() {
   const navigate = useNavigate()
-  const { user, updateUser } = useAuthStore()
+  const { user } = useAuthStore()
   const [solicitudes, setSolicitudes] = useState<SolicitudMaterial[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
@@ -47,11 +42,6 @@ export default function SolicitudesPage() {
   const [submitting, setSubmitting] = useState(false)
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
 
-  // INE management state
-  const [showIneModal, setShowIneModal] = useState(false)
-  const [ineFoto, setIneFoto] = useState<File | null>(null)
-  const [inePreview, setInePreview] = useState<string | null>(null)
-  const [uploadingIne, setUploadingIne] = useState(false)
   const [filtroEstado, setFiltroEstado] = useState('todos')
 
   // Determinar permisos según rol
@@ -75,58 +65,6 @@ export default function SolicitudesPage() {
   useEffect(() => {
     loadData(filtroEstado)
   }, [filtroEstado])
-
-  // INE handlers
-  const handleIneFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setIneFoto(file)
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader()
-        reader.onloadend = () => setInePreview(reader.result as string)
-        reader.readAsDataURL(file)
-      } else {
-        setInePreview(null)
-      }
-    }
-  }
-
-  const handleUploadIne = async () => {
-    if (!ineFoto) return
-    setUploadingIne(true)
-    try {
-      const updatedUser = await userService.uploadIne(ineFoto)
-      updateUser({
-        ine_documento: updatedUser.ine_documento,
-        ine_verificada: false,
-        ine_rechazada: false,
-        ine_rechazo_motivo: '',
-      })
-      toast.success('INE subida correctamente. Será verificada por un administrador.')
-      setShowIneModal(false)
-      setIneFoto(null)
-      setInePreview(null)
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Error al subir la INE')
-    } finally {
-      setUploadingIne(false)
-    }
-  }
-
-  const handleDeleteIne = async () => {
-    try {
-      await userService.deleteIne()
-      updateUser({
-        ine_documento: null,
-        ine_verificada: false,
-        ine_rechazada: false,
-        ine_rechazo_motivo: '',
-      })
-      toast.success('INE eliminada correctamente.')
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Error al eliminar la INE')
-    }
-  }
 
   const handleCreate = () => {
     navigate('/solicitudes/nueva')
@@ -362,91 +300,6 @@ export default function SolicitudesPage() {
         }
       />
 
-      {/* Sección de gestión de INE - solo para rol area */}
-      {isArea && (
-        <div className="mb-6">
-          {!user?.ine_documento ? (
-            // Usuario sin INE registrada
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-4">
-              <IdentificationIcon className="h-8 w-8 text-amber-500 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-amber-800">INE no registrada</h3>
-                <p className="text-sm text-amber-700 mt-1">
-                  Necesitas registrar tu INE para poder crear solicitudes. Sube tu identificación oficial en formato PDF.
-                </p>
-              </div>
-              <Button size="sm" onClick={() => setShowIneModal(true)}>
-                Subir INE
-              </Button>
-            </div>
-          ) : user?.ine_rechazada ? (
-            // INE rechazada
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-4">
-              <ExclamationCircleIcon className="h-8 w-8 text-red-500 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-red-800">INE rechazada</h3>
-                <p className="text-sm text-red-700 mt-1">
-                  {user.ine_rechazo_motivo || 'Tu INE fue rechazada. Por favor sube un nuevo documento.'}
-                </p>
-                <div className="mt-2">
-                  <a href={user.ine_documento} target="_blank" rel="noopener noreferrer" className="text-sm text-red-600 hover:underline">Ver documento enviado</a>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button size="sm" variant="danger" onClick={() => setShowIneModal(true)}>
-                  <ArrowPathIcon className="h-4 w-4 mr-1" />
-                  Subir Nueva
-                </Button>
-                <Button size="sm" variant="secondary" onClick={handleDeleteIne}>
-                  Eliminar INE
-                </Button>
-              </div>
-            </div>
-          ) : !user?.ine_verificada ? (
-            // INE pendiente de verificación
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-4">
-              <IdentificationIcon className="h-8 w-8 text-blue-500 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-blue-800">INE en verificación</h3>
-                <p className="text-sm text-blue-700 mt-1">
-                  Tu INE está siendo revisada por un administrador. Puedes seguir creando solicitudes, pero permanecerán en estado de verificación.
-                </p>
-                <div className="mt-2">
-                  <a href={user.ine_documento} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">Ver documento enviado</a>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button size="sm" variant="secondary" onClick={() => setShowIneModal(true)}>
-                  Reemplazar INE
-                </Button>
-                <Button size="sm" variant="danger" onClick={handleDeleteIne}>
-                  Eliminar INE
-                </Button>
-              </div>
-            </div>
-          ) : (
-            // INE verificada
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-4">
-              <CheckCircleIcon className="h-8 w-8 text-green-500 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-green-800">INE verificada</h3>
-                <p className="text-sm text-green-700 mt-1">
-                  Tu identificación ha sido verificada correctamente.
-                </p>
-                <div className="mt-2">
-                  <a href={user.ine_documento} target="_blank" rel="noopener noreferrer" className="text-sm text-green-600 hover:underline">Ver documento enviado</a>
-                </div>
-              </div>
-              {isAdmin && (
-                <Button size="sm" variant="secondary" onClick={() => setShowIneModal(true)}>
-                  Actualizar INE (Admin)
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Filtros rápidos */}
       <div className="mb-4 flex flex-wrap gap-2">
         {Object.entries({
@@ -505,75 +358,6 @@ export default function SolicitudesPage() {
         </div>
       </Modal>
 
-      {/* INE Upload Modal */}
-      <Modal
-        isOpen={showIneModal}
-        onClose={() => { setShowIneModal(false); setIneFoto(null); setInePreview(null) }}
-        title="Subir Identificación (INE)"
-        size="md"
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600">
-            Sube el documento PDF o Imagen de tu INE.
-          </p>
-
-          {/* Documento actual */}
-          {user?.ine_documento && !inePreview && (
-            <div>
-              <p className="text-xs text-gray-500 mb-2">INE actual:</p>
-              <a href={user.ine_documento} target="_blank" rel="noopener noreferrer" className="text-sm text-primary-600 hover:underline">
-                Ver documento actual (PDF)
-              </a>
-            </div>
-          )}
-
-          {/* Preview de nuevo archivo */}
-          {inePreview ? (
-            <div>
-              <p className="text-xs text-gray-500 mb-2">Nueva imagen lista para subir:</p>
-              <img src={inePreview} alt="Preview INE" className="max-h-48 rounded-lg border border-gray-200 object-contain" />
-            </div>
-          ) : ineFoto && (
-            <div>
-              <p className="text-xs text-gray-500 mb-2">Nuevo documento listo para subir:</p>
-              <div className="bg-gray-100 p-3 rounded text-sm text-gray-700 border border-gray-200 flex items-center gap-2">
-                <DocumentTextIcon className="h-5 w-5 text-gray-500" />
-                {ineFoto.name}
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Seleccionar archivo (Imagen o PDF)
-            </label>
-            <input
-              type="file"
-              accept="image/*,.pdf"
-              onChange={handleIneFileChange}
-              aria-label="Seleccionar archivo de INE"
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-            />
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-2">
-            <Button
-              variant="secondary"
-              onClick={() => { setShowIneModal(false); setIneFoto(null); setInePreview(null) }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleUploadIne}
-              disabled={!ineFoto}
-              loading={uploadingIne}
-            >
-              <IdentificationIcon className="h-4 w-4 mr-1" />
-              Subir INE
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   )
 }

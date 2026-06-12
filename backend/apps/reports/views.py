@@ -1,13 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Q
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
 
-from apps.procurement.models import SolicitudMaterial, DetalleMaterial
+from apps.procurement.models import SolicitudMaterial
 from apps.quotations.models import CotizacionMaterial as Cotizacion
 from apps.orders.models import OrdenCompra
 from apps.invoices.models import Factura
@@ -222,7 +222,7 @@ class GastosPorAreaView(APIView):
         # Obtener querysets filtrados por rol
         qs = get_role_filtered_querysets(user)
         areas = qs['areas']
-        base_facturas = qs['facturas']
+        qs['facturas']
         
         result = []
         
@@ -265,7 +265,7 @@ class GastosMensualesView(APIView):
         
         # Obtener querysets filtrados por rol
         qs = get_role_filtered_querysets(user)
-        base_facturas = qs['facturas']
+        qs['facturas']
         areas = qs['areas']
         
         # Últimos 12 meses

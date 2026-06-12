@@ -1,3 +1,4 @@
+from typing import Any
 from django.db import models
 from django.conf import settings
 from apps.invoices.models import Factura
@@ -5,6 +6,8 @@ from apps.areas.models import Area
 
 
 class SolicitudGasto(models.Model):
+    objects: Any
+    DoesNotExist: Any
     ESTADO_CHOICES = [
         ('BORRADOR', 'Borrador'),
         ('ENVIADA', 'Enviada'),
@@ -41,6 +44,8 @@ class SolicitudGasto(models.Model):
 
 
 class ItemSolicitudGasto(models.Model):
+    objects: Any
+    DoesNotExist: Any
     solicitud_gasto = models.ForeignKey(SolicitudGasto,
                 on_delete=models.CASCADE, related_name='items')
     area = models.ForeignKey(Area, on_delete=models.PROTECT)
@@ -59,6 +64,8 @@ class ItemSolicitudGasto(models.Model):
 
 
 class SolicitudPago(models.Model):
+    objects: Any
+    DoesNotExist: Any
     ESTADO_CHOICES = [
         ('BORRADOR', 'Borrador'),
         ('ENVIADA', 'Enviada'),
@@ -95,6 +102,8 @@ class SolicitudPago(models.Model):
 
 
 class ItemSolicitudPago(models.Model):
+    objects: Any
+    DoesNotExist: Any
     solicitud_pago = models.ForeignKey(SolicitudPago,
                 on_delete=models.CASCADE, related_name='items')
     area = models.ForeignKey(Area, on_delete=models.PROTECT)

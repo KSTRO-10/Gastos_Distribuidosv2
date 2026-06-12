@@ -1,0 +1,7 @@
+{
+    "venvPath": "backend",
+    "venv": "venv",
+    "extraPaths": ["backend"],
+    "typeCheckingMode": "strict",
+    "include": ["backend/apps/orders/tests/test_procurement_to_inventory_e2e.py"]
+}

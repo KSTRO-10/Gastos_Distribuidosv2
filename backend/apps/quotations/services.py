@@ -4,8 +4,6 @@ Genera cotizaciones automáticas cruzando solicitudes de material
 con los catálogos de productos de proveedores.
 """
 
-from decimal import Decimal
-from django.db.models import Q
 from django.utils import timezone
 
 from apps.companies.models import ProductoProveedor, Proveedor

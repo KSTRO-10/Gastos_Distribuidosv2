@@ -1,3 +1,4 @@
+from typing import Any
 """
 Procurement models - Material requests and COG catalog.
 """
@@ -11,6 +12,8 @@ class Cog(models.Model):
     COG (Clasificador por Objeto del Gasto) catalog.
     Mexican government expenditure classification.
     """
+    objects: Any
+    DoesNotExist: Any
     
     codigo = models.CharField(max_length=20, unique=True, verbose_name='Código')
     descripcion = models.CharField(max_length=500, verbose_name='Descripción')
@@ -38,6 +41,8 @@ class SolicitudMaterial(models.Model):
     """
     Material request created by an area.
     """
+    objects: Any
+    DoesNotExist: Any
     
     class EstadoChoices(models.TextChoices):
         PENDIENTE_VERIFICACION = 'pendiente_verificacion', 'Pendiente de Verificación INE'
@@ -102,6 +107,17 @@ class SolicitudMaterial(models.Model):
     urgente = models.BooleanField(default=False, verbose_name='Urgente')
     fecha_requerida = models.DateField(null=True, blank=True, verbose_name='Fecha requerida')
     
+    # INE Verification
+    ine_documento = models.FileField(
+        upload_to="ine_solicitudes/",
+        blank=True,
+        null=True,
+        verbose_name="Documento INE",
+    )
+    ine_rechazo_motivo = models.TextField(
+        blank=True, default="", verbose_name="Motivo de rechazo de INE"
+    )
+    
     # Audit
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -165,6 +181,8 @@ class DetalleMaterial(models.Model):
     """
     Material request line item.
     """
+    objects: Any
+    DoesNotExist: Any
     
     solicitud = models.ForeignKey(
         SolicitudMaterial,

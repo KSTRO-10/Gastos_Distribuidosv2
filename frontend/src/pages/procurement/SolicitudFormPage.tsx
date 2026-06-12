@@ -42,11 +42,12 @@ export default function SolicitudFormPage() {
   const [showIneModal, setShowIneModal] = useState(false)
   const [ineFoto, setIneFoto] = useState<File | null>(null)
   const [inePreview, setInePreview] = useState<string | null>(null)
+  const [existingIne, setExistingIne] = useState<string | null>(null)
   const [pendingFormData, setPendingFormData] = useState<SolicitudForm | null>(null)
   const [pendingSendDirectly, setPendingSendDirectly] = useState(false)
   const [areas, setAreas] = useState<Area[]>([])
   const [cogs, setCogs] = useState<Cog[]>([])
-  const { user, updateUser } = useAuthStore()
+  const { user } = useAuthStore()
   const ineExempt = user?.role === 'admin' || user?.role === 'adquisiciones'
 
   // Opciones predefinidas de unidades
@@ -112,6 +113,9 @@ export default function SolicitudFormPage() {
           setValue('eje_rector', solicitud.eje_rector || '')
           setValue('programa_presupuestario', solicitud.programa_presupuestario || '')
           setValue('actividad', solicitud.actividad || '')
+          if (solicitud.ine_documento) {
+            setExistingIne(solicitud.ine_documento)
+          }
           setValue('detalles', solicitud.detalles.map(d => ({
             concepto: d.concepto,
             descripcion: d.descripcion,
@@ -138,7 +142,7 @@ export default function SolicitudFormPage() {
     }
 
     // If user has no INE photo on file and not editing, show INE modal (admin/adquisiciones exempt)
-    if (!ineExempt && !isEditing && !user?.ine_documento && !ineFoto) {
+    if (!ineExempt && !isEditing && !ineFoto) {
       setPendingFormData(data)
       setPendingSendDirectly(sendDirectly)
       setShowIneModal(true)
@@ -170,11 +174,7 @@ export default function SolicitudFormPage() {
       } else {
         const created = await procurementService.createSolicitud(payload, ineFoto || undefined)
 
-        if (!ineExempt && !user?.ine_documento && ineFoto) {
-          // User just uploaded INE - update local store
-          updateUser({ ine_rechazada: false, ine_rechazo_motivo: '' })
-          toast.success('Solicitud creada. Tu INE será verificada por un administrador.')
-        } else if (!ineExempt && !user?.ine_verificada) {
+        if (!ineExempt) {
           toast.success('Solicitud creada. Tu INE será verificada por un administrador.')
         } else if (sendDirectly) {
           await procurementService.enviarSolicitud(created.id)
@@ -209,7 +209,7 @@ export default function SolicitudFormPage() {
   // Manejador para abrir modal de confirmación de envío directo
   const handleSendDirectly = (data: SolicitudForm) => {
     // If user has no INE on file, the INE modal will handle the flow
-    if (!ineExempt && !user?.ine_documento) {
+    if (!ineExempt && !isEditing && !ineFoto) {
       setPendingFormData(data)
       setPendingSendDirectly(true)
       setShowIneModal(true)
@@ -482,12 +482,12 @@ export default function SolicitudFormPage() {
         {/* Sección de INE directamente en el formulario */}
         <div className="bg-white shadow rounded-lg p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Identificación Oficial (INE)</h2>
-          {user?.ine_documento && !ineFoto ? (
+          {existingIne && !ineFoto ? (
             <div className="flex items-center space-x-3 bg-green-50 p-4 rounded-lg border border-green-200">
               <IdentificationIcon className="h-6 w-6 text-green-600" />
               <div>
-                <p className="text-sm font-medium text-green-800">INE ya proporcionada</p>
-                <a href={user.ine_documento} target="_blank" rel="noopener noreferrer" className="text-sm text-green-600 hover:underline">
+                <p className="text-sm font-medium text-green-800">INE proporcionada</p>
+                <a href={existingIne} target="_blank" rel="noopener noreferrer" className="text-sm text-green-600 hover:underline">
                   Ver documento subido
                 </a>
               </div>

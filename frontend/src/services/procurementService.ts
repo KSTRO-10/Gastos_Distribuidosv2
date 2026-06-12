@@ -51,7 +51,7 @@ export interface SolicitudMaterial {
   detalles: DetalleMaterial[]
   ine_foto?: string | null
   ine_documento?: string | null
-  ine_rechazo_motivo?: string
+  ine_rechazo_motivo?: string | null
   materiales?: {
     descripcion: string
     unidad_medida: string
@@ -103,7 +103,7 @@ export const procurementService = {
     if (ineFoto) {
       const formData = new FormData()
       formData.append('data', JSON.stringify(data))
-      formData.append('ine_foto', ineFoto)
+      formData.append('ine_documento', ineFoto)
       const response = await api.post('/procurement/solicitudes/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
@@ -156,7 +156,7 @@ export const procurementService = {
 
   resubirIne: async (id: number, ineFoto: File): Promise<SolicitudMaterial> => {
     const formData = new FormData()
-    formData.append('ine_foto', ineFoto)
+    formData.append('ine_documento', ineFoto)
     const response = await api.post(`/procurement/solicitudes/${id}/resubir_ine/`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })

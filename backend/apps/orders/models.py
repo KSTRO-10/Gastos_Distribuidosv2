@@ -1,3 +1,4 @@
+from typing import Any
 """Order and Authorization models."""
 
 from django.db import models
@@ -6,6 +7,8 @@ from django.conf import settings
 
 class SolicitudAutorizacion(models.Model):
     """Authorization request for budget sufficiency."""
+    objects: Any
+    DoesNotExist: Any
     
     class EstadoChoices(models.TextChoices):
         PENDIENTE = 'pendiente', 'Pendiente'
@@ -70,6 +73,8 @@ class SolicitudAutorizacion(models.Model):
 
 class AutorizacionPresupuestal(models.Model):
     """Budget authorization granted by treasury."""
+    objects: Any
+    DoesNotExist: Any
     
     solicitud_autorizacion = models.OneToOneField(
         SolicitudAutorizacion,
@@ -101,6 +106,8 @@ class AutorizacionPresupuestal(models.Model):
 
 class OrdenCompra(models.Model):
     """Purchase order sent to supplier."""
+    objects: Any
+    DoesNotExist: Any
     
     class EstadoChoices(models.TextChoices):
         BORRADOR = 'borrador', 'Borrador'
@@ -211,6 +218,8 @@ class OrdenCompra(models.Model):
 
 class DetalleOrden(models.Model):
     """Line item in a purchase order."""
+    objects: Any
+    DoesNotExist: Any
     
     orden = models.ForeignKey(
         OrdenCompra,

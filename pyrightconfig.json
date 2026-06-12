@@ -1,0 +1,32 @@
+{
+  "venvPath": "backend",
+  "venv": "venv",
+  "pythonVersion": "3.12",
+  "extraPaths": [
+    "backend"
+  ],
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none",
+  "reportMissingTypeStubs": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownParameterType": "none",
+  "reportMissingParameterType": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportOperatorIssue": "none",
+  "reportIndexIssue": "none",
+  "reportCallIssue": "none",
+  "reportReturnType": "none",
+  "reportArgumentType": "none",
+  "reportGeneralTypeIssues": "none",
+  "ignore": [
+    "frontend/**",
+    "**/__pyrefly_virtual__/**",
+    "backend/django/**",
+    "backend/rest_framework/**",
+    "backend/venv/**"
+  ]
+}

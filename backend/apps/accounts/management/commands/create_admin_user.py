@@ -29,11 +29,11 @@ class Command(BaseCommand):
             }
         )
 
-        user = User.objects.create_superuser(
+        User.objects.create_superuser(
             username='admin',
             email=email,
             password=password,
             full_name='Administrador',
             role=role,
         )
-        self.stdout.write(self.style.SUCCESS(f'Admin user "{email}" created'))
+        self.stdout.write(self.style.SUCCESS(f'Admin user "{email}" created'))  # type: ignore

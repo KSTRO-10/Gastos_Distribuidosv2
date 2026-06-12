@@ -10,7 +10,7 @@ from datetime import timedelta
 import random
 
 from apps.areas.models import Area
-from apps.companies.models import Company, Proveedor
+from apps.companies.models import Proveedor
 from apps.procurement.models import SolicitudMaterial
 from apps.invoices.models import Factura, DistribucionGasto
 from apps.accounts.models import User

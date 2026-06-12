@@ -1,3 +1,4 @@
+from typing import Any
 """Budget models - Plantillas presupuestales y claves presupuestarias."""
 
 from django.db import models
@@ -9,6 +10,8 @@ class PlantillaPresupuestal(models.Model):
     Plantilla presupuestal que agrupa las claves presupuestarias
     de un ejercicio fiscal para una entidad.
     """
+    objects: Any
+    DoesNotExist: Any
 
     tenant = models.ForeignKey(
         'tenants.Tenant',
@@ -69,6 +72,8 @@ class ItemClavePres(models.Model):
     Cada registro representa una línea de la plantilla de claves
     presupuestarias con todos sus clasificadores.
     """
+    objects: Any
+    DoesNotExist: Any
 
     plantilla = models.ForeignKey(
         PlantillaPresupuestal,

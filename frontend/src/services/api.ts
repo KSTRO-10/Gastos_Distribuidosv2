@@ -79,3 +79,10 @@ api.interceptors.response.use(
 )
 
 export default api
+
+// Helper para manejar respuestas paginadas o arrays directos
+export const extractData = <T>(data: T[] | { results: T[] }): T[] => {
+  if (Array.isArray(data)) return data
+  if (data && typeof data === 'object' && 'results' in data) return data.results
+  return []
+}

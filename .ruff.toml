@@ -1,0 +1,17 @@
+# Ruff configuration file
+exclude = [
+    ".git",
+    "__pycache__",
+    "venv",
+    "frontend",
+    "django",
+    "rest_framework",
+    "**/migrations/*",
+]
+
+line-length = 120
+
+[lint]
+ignore = [
+    "E402",  # Module level import not at top of file (needed for django.setup() in scripts)
+]

@@ -19,6 +19,7 @@ import { procurementService, SolicitudMaterial } from '@/services/procurementSer
 import { documentService } from '@/services/documentService'
 import { orderService } from '@/services/orderService'
 import { useAuthStore } from '@/stores/authStore'
+import CotizacionesSection from './components/CotizacionesSection'
 
 const estadoColors: Record<string, string> = {
   pendiente_verificacion: 'bg-amber-100 text-amber-800',
@@ -602,6 +603,16 @@ export default function SolicitudDetailPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Sección de Cotizaciones */}
+      <CotizacionesSection 
+        solicitudId={solicitud.id} 
+        estadoSolicitud={solicitud.estado} 
+        onCotizacionSelected={() => {
+          // Recargar la solicitud para ver si cambió de estado
+          procurementService.getSolicitud(solicitud.id).then(setSolicitud)
+        }} 
+      />
     </div>
   )
 }

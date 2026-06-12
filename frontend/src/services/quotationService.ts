@@ -109,8 +109,9 @@ const extractData = <T>(data: T[] | { results: T[] }): T[] => {
 
 export const quotationService = {
   // Cotizaciones
-  getCotizaciones: async (): Promise<Cotizacion[]> => {
-    const response = await api.get('/quotations/cotizaciones/')
+  getCotizaciones: async (solicitudId?: number): Promise<Cotizacion[]> => {
+    const params = solicitudId ? { solicitud: solicitudId } : {}
+    const response = await api.get('/quotations/cotizaciones/', { params })
     return extractData(response.data)
   },
 

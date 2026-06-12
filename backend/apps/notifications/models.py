@@ -1,3 +1,4 @@
+from typing import Any
 """Notification models."""
 
 from django.db import models
@@ -6,6 +7,8 @@ from django.conf import settings
 
 class Notification(models.Model):
     """User notification."""
+    objects: Any
+    DoesNotExist: Any
     
     class TipoChoices(models.TextChoices):
         INFO = 'info', 'Información'
@@ -50,6 +53,8 @@ class Notification(models.Model):
 
 class ActivityLog(models.Model):
     """System activity log."""
+    objects: Any
+    DoesNotExist: Any
     
     class AccionChoices(models.TextChoices):
         CREAR = 'crear', 'Crear'

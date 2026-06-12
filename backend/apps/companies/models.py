@@ -2,6 +2,7 @@
 Company models (AntePubli in the original system).
 """
 
+from typing import Any
 from django.db import models
 from django.conf import settings
 
@@ -11,6 +12,8 @@ class Company(models.Model):
     Company model (previously AntePubli).
     Represents an organization within a tenant.
     """
+    objects: Any
+    DoesNotExist: Any
     
     rfc = models.CharField(max_length=13, unique=True, verbose_name='RFC')
     razon_social = models.CharField(max_length=255, verbose_name='Razón Social')
@@ -71,7 +74,7 @@ class Company(models.Model):
         ordering = ['razon_social']
 
     def __str__(self):
-        return self.razon_social
+        return str(self.razon_social)
 
     @property
     def direccion_completa(self):
@@ -84,13 +87,15 @@ class Company(models.Model):
             self.estado,
             self.codigo_postal
         ]
-        return ', '.join(filter(None, parts))
+        return ', '.join(filter(None, parts))  # type: ignore[arg-type]
 
 
 class Proveedor(models.Model):
     """
     Supplier/Provider model for external companies.
     """
+    objects: Any
+    DoesNotExist: Any
     
     class EstadoChoices(models.TextChoices):
         PENDIENTE = 'pendiente', 'Pendiente'
@@ -156,7 +161,7 @@ class Proveedor(models.Model):
         ordering = ['razon_social']
 
     def __str__(self):
-        return self.razon_social
+        return str(self.razon_social)
 
 
 class ProductoProveedor(models.Model):
@@ -164,6 +169,8 @@ class ProductoProveedor(models.Model):
     Catálogo de productos/servicios que ofrece un proveedor con sus precios.
     Permite generar cotizaciones automáticas al cruzar con solicitudes de material.
     """
+    objects: Any
+    DoesNotExist: Any
 
     proveedor = models.ForeignKey(
         Proveedor,
@@ -212,6 +219,8 @@ class ProductoProveedor(models.Model):
 
 class FirmanteDocumento(models.Model):
     """Configuración de firmantes por tipo de documento y empresa."""
+    objects: Any
+    DoesNotExist: Any
     
     class TipoDocumentoChoices(models.TextChoices):
         SOLICITUD = 'solicitud', 'Solicitud de Materiales'
@@ -283,9 +292,9 @@ class FirmanteDocumento(models.Model):
         unique_together = ['company', 'tipo_documento', 'orden']
     
     def __str__(self):
-        nombre_display = self.nombre or (self.user.full_name if self.user else '(sin asignar)')
-        return f"{self.company.razon_social} - {self.get_tipo_documento_display()} - {nombre_display}"
+        nombre_display: str = self.nombre or (getattr(self.user, 'full_name', None) or '(sin asignar)') if self.user else '(sin asignar)'  # type: ignore[assignment]
+        return f"{self.company.razon_social} - {self.get_tipo_documento_display()} - {nombre_display}"  # type: ignore[attr-defined]
     
     @property
     def nombre_completo(self):
-        return self.nombre or (self.user.full_name if self.user else '')
+        return self.nombre or (getattr(self.user, 'full_name', None) or '') if self.user else ''

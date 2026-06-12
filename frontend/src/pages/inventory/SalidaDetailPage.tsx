@@ -196,10 +196,9 @@ export default function SalidaDetailPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Material</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Artículo</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descripción</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Cantidad</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Unidad</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -207,16 +206,13 @@ export default function SalidaDetailPage() {
                 <tr key={detalle.id || index}>
                   <td className="px-6 py-4 text-sm text-gray-500">{index + 1}</td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    {detalle.material}
+                    {detalle.articulo_nombre || `ID: ${detalle.articulo}`}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
                     {detalle.descripcion || '-'}
                   </td>
                   <td className="px-6 py-4 text-sm text-center font-medium">
                     {detalle.cantidad}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-center">
-                    {detalle.unidad}
                   </td>
                 </tr>
               ))}

@@ -12,28 +12,35 @@ from drf_spectacular.views import (
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    
+    path("admin/", admin.site.urls),
     # Public API
-    path('api/', include([
-        # Auth (login works on public schema too)
-        path('auth/', include('apps.accounts.urls')),
-        
-        # Tenant management
-        path('tenants/', include('apps.tenants.urls')),
-        
-        # API Documentation
-        path('schema/', SpectacularAPIView.as_view(), name='schema'),
-        path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    ])),
+    path(
+        "api/",
+        include(
+            [
+                # Auth (login works on public schema too)
+                path("auth/", include("apps.accounts.urls")),
+                # Tenant management
+                path("tenants/", include("apps.tenants.urls")),
+                # API Documentation
+                path("schema/", SpectacularAPIView.as_view(), name="schema"),
+                path(
+                    "docs/",
+                    SpectacularSwaggerView.as_view(url_name="schema"),
+                    name="swagger-ui",
+                ),
+            ]
+        ),
+    ),
 ]
 
 # Debug toolbar URLs (only in DEBUG mode)
 if settings.DEBUG:
     try:
         import debug_toolbar  # type: ignore
+
         urlpatterns = [
-            path('__debug__/', include(debug_toolbar.urls)),
+            path("__debug__/", include(debug_toolbar.urls)),
         ] + urlpatterns
     except ImportError:
         # debug_toolbar not installed, skip
