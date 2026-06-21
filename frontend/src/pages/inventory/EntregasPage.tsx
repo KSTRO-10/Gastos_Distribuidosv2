@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { inventoryService, EntregaBienes } from '../../services/inventoryService'
 import { orderService, OrdenCompra } from '../../services/orderService'
@@ -12,34 +12,46 @@ export default function EntregasPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filterCompleta, setFilterCompleta] = useState<string>('all')
+  const isLoadingRef = React.useRef(false)
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
+  const loadData = async (controller?: AbortController) => {
+    if (isLoadingRef.current) return
+    isLoadingRef.current = true
+    setLoading(true)
     try {
-      setLoading(true)
       const [entregasData, ordenesData] = await Promise.all([
         inventoryService.getEntregas(),
         orderService.getOrdenes()
       ])
 
-      setEntregas(entregasData)
-
-      // Filter for orders that need receiving
-      const pending = ordenesData.filter(o =>
-        o.estado === 'confirmada' || o.estado === 'parcial'
-      )
-      setPendingOrders(pending)
-
+      if (!controller || !controller.signal.aborted) {
+        setEntregas(entregasData)
+        // Filter for orders that need receiving
+        const pending = ordenesData.filter(o =>
+          o.estado === 'confirmada' || o.estado === 'parcial'
+        )
+        setPendingOrders(pending)
+      }
     } catch (err) {
-      setError('Error al cargar los datos')
-      console.error(err)
+      if (!controller || !controller.signal.aborted) {
+        setError('Error al cargar los datos')
+        setEntregas([])
+        setPendingOrders([])
+        console.error(err)
+      }
     } finally {
+      isLoadingRef.current = false
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    const controller = new AbortController()
+    loadData(controller)
+    return () => {
+      controller.abort()
+    }
+  }, [])
 
   const filteredEntregas = entregas.filter(entrega => {
     if (filterCompleta === 'all') return true

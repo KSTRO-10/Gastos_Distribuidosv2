@@ -23,21 +23,35 @@ export default function CotizacionesPage() {
   const { user } = useAuthStore()
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([])
   const [loading, setLoading] = useState(true)
-
-  const loadData = async () => {
+  const loadData = async (controller?: AbortController) => {
     setLoading(true)
     try {
       const data = await quotationService.getCotizaciones()
-      setCotizaciones(data)
-    } catch (error) {
-      toast.error('Error al cargar las cotizaciones')
+      if (!controller || !controller.signal.aborted) {
+        setCotizaciones(data)
+      }
+    } catch (error: any) {
+      if (!controller || !controller.signal.aborted) {
+        if (error.name !== 'CanceledError' && error.code !== 'ERR_CANCELED') {
+          toast.dismiss('cotizaciones-error')
+          toast.error('Error al cargar las cotizaciones', { id: 'cotizaciones-error' })
+          setCotizaciones([])
+        }
+      }
     } finally {
-      setLoading(false)
+      if (!controller || !controller.signal.aborted) {
+        setLoading(false)
+      }
     }
   }
 
   useEffect(() => {
-    loadData()
+    const controller = new AbortController()
+    loadData(controller)
+    return () => {
+      controller.abort()
+      toast.dismiss('cotizaciones-error')
+    }
   }, [])
 
   const handleCreate = () => {

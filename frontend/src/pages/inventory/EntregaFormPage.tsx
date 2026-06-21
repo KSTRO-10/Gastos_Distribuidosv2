@@ -85,7 +85,11 @@ export default function EntregaFormPage() {
     }
   }, [watchOrden, ordenes, isEditing, preSelectedOrdenId, setValue])
 
+  const isLoadingOrdenesRef = useRef(false)
+
   const loadOrdenes = async () => {
+    if (isLoadingOrdenesRef.current) return
+    isLoadingOrdenesRef.current = true
     try {
       const data = await orderService.getOrdenes()
       // Solo órdenes confirmadas o parcialmente entregadas
@@ -95,6 +99,9 @@ export default function EntregaFormPage() {
       setOrdenes(ordenesValidas)
     } catch (err) {
       console.error('Error al cargar órdenes:', err)
+      setOrdenes([])
+    } finally {
+      isLoadingOrdenesRef.current = false
     }
   }
 
@@ -222,8 +229,8 @@ export default function EntregaFormPage() {
               label="Orden de Compra *"
               {...register('orden', { required: 'Seleccione una orden' })}
               error={errors.orden?.message}
-              disabled={isEditing}
-              placeholder="Seleccione una orden"
+              disabled={isEditing || ordenes.length === 0}
+              placeholder={ordenes.length === 0 ? "No hay órdenes confirmadas o parciales" : "Seleccione una orden"}
               options={ordenes.map(orden => ({
                 value: orden.id,
                 label: `${orden.numero} - ${orden.proveedor_nombre}`

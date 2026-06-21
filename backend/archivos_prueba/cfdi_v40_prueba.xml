@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="4.0">
+  <cfdi:Emisor Rfc="EKU9003173C9" Nombre="EMISOR 4.0"/>
+  <cfdi:Receptor Rfc="SURE9102242H1" Nombre="RECEPTOR 4.0"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="43231500" Cantidad="1" Descripcion="Concepto 4.0" ValorUnitario="1000.00" Importe="1000.00"/>
+  </cfdi:Conceptos>
+  <cfdi:Complemento>
+    <tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" Version="1.1" UUID="44444444-4444-4444-4444-444444444444"/>
+  </cfdi:Complemento>
+</cfdi:Comprobante>

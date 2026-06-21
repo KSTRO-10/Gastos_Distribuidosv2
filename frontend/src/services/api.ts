@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
+import { toast } from 'react-hot-toast'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -28,14 +29,18 @@ let pendingRefresh: Promise<string> | null = null
 
 // Response interceptor to handle token refresh
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Clear any previous error toasts on successful response
+    toast.dismiss()
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
 
     // Skip refresh for auth endpoints to avoid loops
     const isAuthEndpoint = originalRequest.url?.includes('/auth/token')
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true
 
       const { refreshToken, logout, setAuth } = useAuthStore.getState()

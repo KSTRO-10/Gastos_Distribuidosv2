@@ -103,10 +103,12 @@ export const ExpenseBarChart: React.FC<ExpenseBarChartProps> = ({ data, height =
           tickFormatter={formatShortCurrency}
         />
         <Tooltip content={<CustomTooltip />} />
+        {/* Leyenda desactivada para evitar desbordes con docenas de áreas
         <Legend
           wrapperStyle={{ paddingTop: 20 }}
           formatter={(value) => <span className="text-sm text-gray-600">{value}</span>}
         />
+        */}
         <Bar
           dataKey="gastado"
           name="Gastado"
@@ -164,10 +166,12 @@ export const TrendLineChart: React.FC<TrendLineChartProps> = ({ data, height = 3
           tickFormatter={formatShortCurrency}
         />
         <Tooltip content={<CustomTooltip />} />
+        {/* Leyenda desactivada para evitar desbordes
         <Legend
           wrapperStyle={{ paddingTop: 20 }}
           formatter={(value) => <span className="text-sm text-gray-600">{value}</span>}
         />
+        */}
         <Area
           type="monotone"
           dataKey="gastado"
@@ -231,14 +235,7 @@ export const DistributionPieChart: React.FC<DistributionPieChartProps> = ({
             boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
           }}
         />
-        {showLegend && (
-          <Legend
-            layout="vertical"
-            align="right"
-            verticalAlign="middle"
-            formatter={(value) => <span className="text-sm text-gray-600">{value}</span>}
-          />
-        )}
+
       </PieChart>
     </ResponsiveContainer>
   )

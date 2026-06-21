@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { facturaService, Factura } from '../../services/facturaService'
 import Button from '../../components/ui/Button'
@@ -53,19 +53,25 @@ export default function FacturasPage() {
     }
   }
 
+  const isLoadingRef = React.useRef(false)
+
   useEffect(() => {
     loadFacturas()
   }, [])
 
   const loadFacturas = async () => {
+    if (isLoadingRef.current) return
+    isLoadingRef.current = true
+    setLoading(true)
     try {
-      setLoading(true)
       const data = await facturaService.getFacturas()
       setFacturas(data)
     } catch (err) {
       setError('Error al cargar las facturas')
       console.error(err)
+      setFacturas([])
     } finally {
+      isLoadingRef.current = false
       setLoading(false)
     }
   }

@@ -22,7 +22,11 @@ export default function EntregaDetailPage() {
     }
   }, [id])
 
+  const isLoadingRef = useRef(false)
+
   const loadEntrega = async () => {
+    if (isLoadingRef.current) return
+    isLoadingRef.current = true
     try {
       setLoading(true)
       const data = await inventoryService.getEntrega(Number(id))
@@ -31,6 +35,7 @@ export default function EntregaDetailPage() {
       setError('Error al cargar la entrega')
       console.error(err)
     } finally {
+      isLoadingRef.current = false
       setLoading(false)
     }
   }

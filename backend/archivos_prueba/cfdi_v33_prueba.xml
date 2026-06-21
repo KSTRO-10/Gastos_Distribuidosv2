@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="3.3">
+  <cfdi:Emisor rfc="EKU9003173C9" nombre="EMISOR 3.3"/>
+  <cfdi:Receptor rfc="SURE9102242H1" nombre="RECEPTOR 3.3"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="43231500" Cantidad="1" Descripcion="Concepto 3.3" ValorUnitario="1000.00" Importe="1000.00"/>
+  </cfdi:Conceptos>
+  <cfdi:Complemento>
+    <tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" Version="1.1" uuid="33333333-3333-3333-3333-333333333333"/>
+  </cfdi:Complemento>
+</cfdi:Comprobante>

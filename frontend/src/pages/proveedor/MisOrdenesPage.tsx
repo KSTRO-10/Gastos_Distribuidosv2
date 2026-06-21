@@ -42,20 +42,34 @@ export default function MisOrdenesPage() {
   const [referenciaExterna, setReferenciaExterna] = useState('')
   const [modalOrden, setModalOrden] = useState<OrdenCompra | null>(null)
 
-  useEffect(() => {
-    loadOrdenes()
-  }, [])
-
-  const loadOrdenes = async () => {
+  const loadOrdenes = async (controller?: AbortController) => {
+    setLoading(true)
     try {
       const data = await proveedorPortalService.getMisOrdenes()
-      setOrdenes(data)
+      if (!controller || !controller.signal.aborted) {
+        setOrdenes(data)
+      }
     } catch (error: any) {
-      toast.error('Error al cargar órdenes')
+      if (!controller || !controller.signal.aborted) {
+        toast.dismiss('mis-ordenes-error')
+        toast.error('Error al cargar órdenes', { id: 'mis-ordenes-error' })
+        setOrdenes([])
+      }
     } finally {
-      setLoading(false)
+      if (!controller || !controller.signal.aborted) {
+        setLoading(false)
+      }
     }
   }
+
+  useEffect(() => {
+    const controller = new AbortController()
+    loadOrdenes(controller)
+    return () => {
+      controller.abort()
+      toast.dismiss('mis-ordenes-error')
+    }
+  }, [])
 
   const handleConfirmar = async () => {
     if (!modalOrden) return

@@ -407,7 +407,7 @@ const DashboardPage: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900">Alertas</h3>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-y-auto max-h-[300px] pr-2">
               {stats?.solicitudes_pendientes ? (
                 <div
                   onClick={() => navigate('/solicitudes')}
@@ -426,17 +426,18 @@ const DashboardPage: React.FC = () => {
 
               {stats?.facturas_pendientes ? (
                 <div
-                  onClick={() => navigate('/facturas')}
-                  className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-100 hover:border-blue-200 transition-colors group"
+                  onClick={() => navigate('/facturacion/lista')}
+                  className="relative z-20 pointer-events-auto flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-100 hover:border-blue-200 transition-colors group w-full select-none"
+                  role="button"
                 >
                   <div className="w-2 h-2 mt-2 rounded-full bg-blue-500 animate-pulse" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-blue-800">
-                      {stats.facturas_pendientes} facturas por procesar
+                  <div className="flex-1 pointer-events-none">
+                    <p className="text-sm font-medium text-blue-800 select-none">
+                      {stats?.facturas_pendientes || 1} facturas por procesar
                     </p>
-                    <p className="text-xs text-blue-600 mt-1">En espera de validación</p>
+                    <p className="text-xs text-blue-600 mt-1 select-none">En espera de validación</p>
                   </div>
-                  <span className="text-blue-400 group-hover:text-blue-600 transition-colors">→</span>
+                  <span className="text-blue-400 group-hover:text-blue-600 transition-colors pointer-events-none select-none">→</span>
                 </div>
               ) : null}
 
@@ -482,38 +483,23 @@ const DashboardPage: React.FC = () => {
       {/* Gastos por área (detalle) y Distribución - Solo para roles financieros */}
       {showFinancialInfo && gastosPorArea.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 bg-white" shadow="lg">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Detalle por Área</h3>
-            <div className="space-y-4">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col h-[460px] w-full min-w-0 overflow-hidden lg:col-span-1">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              🔔 Alertas de Presupuesto
+            </h3>
+            
+            {/* CONTENEDOR CON CANDADO DE SCROLL INTEGRADO */}
+            <div className="flex-1 overflow-y-auto pr-2 space-y-3 max-h-[370px] w-full custom-scrollbar">
               {gastosPorArea.map((area, index) => (
-                <div key={index} className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444'][index % 5] }}
-                      />
-                      <span className="font-medium text-gray-900">{area.area}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-sm text-gray-500">
-                        {formatCurrency(area.gastado)} / {formatCurrency(area.presupuesto)}
-                      </span>
-                    </div>
-                  </div>
-                  <ProgressBar
-                    value={area.porcentaje}
-                    max={100}
-                    size="sm"
-                    color="auto"
-                    showLabel
-                  />
+                <div key={index} className="p-3 bg-red-50 border border-red-100 rounded-lg w-full block clear-both">
+                  <p className="text-sm font-semibold text-red-700 break-words">{area.area}</p>
+                  <span className="text-xs text-red-500 block mt-1">Presupuesto al {area.porcentaje.toFixed(1)}%</span>
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
 
-          <Card className="bg-white" shadow="lg">
+          <Card className="bg-white lg:col-span-2" shadow="lg">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Distribución de Gastos</h3>
             <p className="text-sm text-gray-500 mb-4">Por área del mes</p>
             <DistributionPieChart data={pieChartData} height={250} />
@@ -531,7 +517,7 @@ const DashboardPage: React.FC = () => {
               Ver todas →
             </a>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 overflow-y-auto max-h-[350px]">
             {solicitudesRecientes.map((solicitud) => (
               <div key={solicitud.id} className="py-3 flex items-center justify-between hover:bg-gray-50 -mx-6 px-6 transition-colors">
                 <div className="flex items-center gap-3">
@@ -557,7 +543,7 @@ const DashboardPage: React.FC = () => {
         {/* Actividad Reciente */}
         <Card className="bg-white" shadow="lg">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Actividad Reciente</h3>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto max-h-[350px] pr-2">
             {actividad.map((item, index) => (
               <div key={item.id} className="flex gap-4">
                 <div className="relative">

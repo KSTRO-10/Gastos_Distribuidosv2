@@ -24,7 +24,8 @@ import {
   ExclamationTriangleIcon,
   ExclamationCircleIcon,
   InformationCircleIcon,
-  ClipboardDocumentCheckIcon
+  ClipboardDocumentCheckIcon,
+  BoltIcon
 } from '@heroicons/react/24/outline'
 
 interface NavItem {
@@ -69,6 +70,9 @@ const navigation: NavItem[] = [
   // Facturación: Dashboard central de Cuentas por Pagar
   { name: 'Facturación', href: '/facturacion', icon: ReceiptPercentIcon, roles: ['admin', 'adquisiciones', 'tesoreria'] },
 
+  // Distribución Rápida: subir XML y distribuir gastos directamente
+  { name: 'Dist. Rápida', href: '/facturas/distribucion-rapida', icon: BoltIcon, roles: ['admin', 'tesoreria'] },
+
   // Claves Presupuestarias: plantillas de claves presupuestales
   { name: 'Claves Presupuestarias', href: '/budget/plantillas', icon: BanknotesIcon, roles: ['admin', 'tesoreria'] },
 ]
@@ -103,7 +107,7 @@ export default function MainLayout() {
   const [loadingNotifications, setLoadingNotifications] = useState(false)
 
   const fetchNotifications = useCallback(async () => {
-    if (!user) return
+    if (!user || loadingNotifications) return
     try {
       setLoadingNotifications(true)
       const data = await notificationService.getNotifications()
@@ -114,14 +118,16 @@ export default function MainLayout() {
     } finally {
       setLoadingNotifications(false)
     }
-  }, [user])
+  }, [user, loadingNotifications])
 
   useEffect(() => {
     fetchNotifications()
     // Poll every 30 seconds for new notifications
-    const interval = setInterval(fetchNotifications, 30000)
+    const interval = setInterval(() => {
+      fetchNotifications()
+    }, 30000)
     return () => clearInterval(interval)
-  }, [fetchNotifications])
+  }, [user])
 
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.read) {
@@ -208,6 +214,11 @@ export default function MainLayout() {
              pathname.startsWith('/inventario/ajustes')
     }
 
+    // Caso especial para facturas y distribución rápida
+    if (href === '/facturas' || href === '/facturacion' || href === '/portal/facturas') {
+      return pathname === href;
+    }
+
     return pathname.startsWith(href + '/')
   }
 
@@ -232,7 +243,7 @@ export default function MainLayout() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Mobile sidebar */}
-      <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? '' : 'hidden'}`}>
+      <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? '' : 'hidden'} print:hidden`}>
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
         <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
           <div className="flex h-16 items-center justify-between px-4">
@@ -263,7 +274,7 @@ export default function MainLayout() {
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col print:hidden">
         <div className="flex flex-grow flex-col overflow-y-auto bg-gradient-to-b from-slate-900 to-slate-800">
           <div className="flex h-16 items-center px-4 border-b border-slate-700/50">
             <div className="flex items-center gap-2">
@@ -342,9 +353,9 @@ export default function MainLayout() {
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-64 print:pl-0">
         {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-100 bg-white/80 backdrop-blur-lg px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-100 bg-white/80 backdrop-blur-lg px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 print:hidden">
           <button
             type="button"
             className="-m-2.5 p-2.5 text-gray-700 lg:hidden"

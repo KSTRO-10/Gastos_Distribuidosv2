@@ -47,94 +47,106 @@ def parse_cfdi_xml(xml_content: bytes) -> dict[str, Any]:
         # Get the Comprobante element
         comprobante = root
         
+        # Helper to get case-insensitive attributes dictionary
+        def get_attrs(node):
+            if node is None: return {}
+            return {k.lower(): v for k, v in node.attrib.items()}
+            
+        c_attrs = get_attrs(comprobante)
+        
         # Extract basic attributes
         data = {
-            'version': comprobante.get('Version', '4.0'),
-            'serie': comprobante.get('Serie', ''),
-            'folio': comprobante.get('Folio', ''),
-            'fecha': comprobante.get('Fecha', ''),
-            'forma_pago': comprobante.get('FormaPago', ''),
-            'condiciones_pago': comprobante.get('CondicionesDePago', ''),
-            'subtotal': Decimal(comprobante.get('SubTotal', '0')),
-            'descuento': Decimal(comprobante.get('Descuento', '0')),
-            'moneda': comprobante.get('Moneda', 'MXN'),
-            'tipo_cambio': Decimal(comprobante.get('TipoCambio', '1')),
-            'total': Decimal(comprobante.get('Total', '0')),
-            'tipo_comprobante': comprobante.get('TipoDeComprobante', ''),
-            'exportacion': comprobante.get('Exportacion', ''),
-            'metodo_pago': comprobante.get('MetodoPago', ''),
-            'lugar_expedicion': comprobante.get('LugarExpedicion', ''),
+            'version': c_attrs.get('version', '4.0'),
+            'serie': c_attrs.get('serie', ''),
+            'folio': c_attrs.get('folio', ''),
+            'fecha': c_attrs.get('fecha', ''),
+            'forma_pago': c_attrs.get('formapago', ''),
+            'condiciones_pago': c_attrs.get('condicionesdepago', ''),
+            'subtotal': Decimal(c_attrs.get('subtotal', '0')),
+            'descuento': Decimal(c_attrs.get('descuento', '0')),
+            'moneda': c_attrs.get('moneda', 'MXN'),
+            'tipo_cambio': Decimal(c_attrs.get('tipocambio', '1')),
+            'total': Decimal(c_attrs.get('total', '0')),
+            'tipo_comprobante': c_attrs.get('tipodecomprobante', ''),
+            'exportacion': c_attrs.get('exportacion', ''),
+            'metodo_pago': c_attrs.get('metodopago', ''),
+            'lugar_expedicion': c_attrs.get('lugarexpedicion', ''),
         }
         
         # Parse Emisor (Issuer)
-        emisor = comprobante.find('cfdi:Emisor', CFDI_NAMESPACES)
+        emisor = comprobante.find('{*}Emisor')
+        e_attrs = get_attrs(emisor)
         if emisor is not None:
             data['emisor'] = {
-                'rfc': emisor.get('Rfc', ''),
-                'nombre': emisor.get('Nombre', ''),
-                'regimen_fiscal': emisor.get('RegimenFiscal', ''),
+                'rfc': e_attrs.get('rfc', ''),
+                'nombre': e_attrs.get('nombre', ''),
+                'regimen_fiscal': e_attrs.get('regimenfiscal', ''),
             }
         else:
             data['emisor'] = {'rfc': '', 'nombre': '', 'regimen_fiscal': ''}
         
         # Parse Receptor (Receiver)
-        receptor = comprobante.find('cfdi:Receptor', CFDI_NAMESPACES)
+        receptor = comprobante.find('{*}Receptor')
+        r_attrs = get_attrs(receptor)
         if receptor is not None:
             data['receptor'] = {
-                'rfc': receptor.get('Rfc', ''),
-                'nombre': receptor.get('Nombre', ''),
-                'domicilio_fiscal': receptor.get('DomicilioFiscalReceptor', ''),
-                'regimen_fiscal': receptor.get('RegimenFiscalReceptor', ''),
-                'uso_cfdi': receptor.get('UsoCFDI', ''),
+                'rfc': r_attrs.get('rfc', ''),
+                'nombre': r_attrs.get('nombre', ''),
+                'domicilio_fiscal': r_attrs.get('domiciliofiscalreceptor', ''),
+                'regimen_fiscal': r_attrs.get('regimenfiscalreceptor', ''),
+                'uso_cfdi': r_attrs.get('usocfdi', ''),
             }
         else:
             data['receptor'] = {'rfc': '', 'nombre': '', 'uso_cfdi': ''}
         
         # Parse Conceptos (Line items)
         conceptos = []
-        conceptos_elem = comprobante.find('cfdi:Conceptos', CFDI_NAMESPACES)
+        conceptos_elem = comprobante.find('{*}Conceptos')
         if conceptos_elem is not None:
-            for concepto in conceptos_elem.findall('cfdi:Concepto', CFDI_NAMESPACES):
+            for concepto in conceptos_elem.findall('{*}Concepto'):
+                item_attrs = get_attrs(concepto)
                 concepto_data = {
-                    'clave_prod_serv': concepto.get('ClaveProdServ', ''),
-                    'no_identificacion': concepto.get('NoIdentificacion', ''),
-                    'cantidad': Decimal(concepto.get('Cantidad', '0')),
-                    'clave_unidad': concepto.get('ClaveUnidad', ''),
-                    'unidad': concepto.get('Unidad', ''),
-                    'descripcion': concepto.get('Descripcion', ''),
-                    'valor_unitario': Decimal(concepto.get('ValorUnitario', '0')),
-                    'importe': Decimal(concepto.get('Importe', '0')),
-                    'descuento': Decimal(concepto.get('Descuento', '0')),
-                    'objeto_imp': concepto.get('ObjetoImp', ''),
+                    'clave_prod_serv': item_attrs.get('claveprodserv', ''),
+                    'no_identificacion': item_attrs.get('noidentificacion', ''),
+                    'cantidad': Decimal(item_attrs.get('cantidad', '0')),
+                    'clave_unidad': item_attrs.get('claveunidad', ''),
+                    'unidad': item_attrs.get('unidad', ''),
+                    'descripcion': item_attrs.get('descripcion', ''),
+                    'valor_unitario': Decimal(item_attrs.get('valorunitario', '0')),
+                    'importe': Decimal(item_attrs.get('importe', '0')),
+                    'descuento': Decimal(item_attrs.get('descuento', '0')),
+                    'objeto_imp': item_attrs.get('objetoimp', ''),
                     'impuestos': {},
                 }
                 
                 # Parse taxes for this concept
-                impuestos_elem = concepto.find('cfdi:Impuestos', CFDI_NAMESPACES)
+                impuestos_elem = concepto.find('{*}Impuestos')
                 if impuestos_elem is not None:
                     traslados = []
                     retenciones = []
                     
-                    traslados_elem = impuestos_elem.find('cfdi:Traslados', CFDI_NAMESPACES)
+                    traslados_elem = impuestos_elem.find('{*}Traslados')
                     if traslados_elem is not None:
-                        for traslado in traslados_elem.findall('cfdi:Traslado', CFDI_NAMESPACES):
+                        for traslado in traslados_elem.findall('{*}Traslado'):
+                            t_attrs = get_attrs(traslado)
                             traslados.append({
-                                'base': Decimal(traslado.get('Base', '0')),
-                                'impuesto': traslado.get('Impuesto', ''),
-                                'tipo_factor': traslado.get('TipoFactor', ''),
-                                'tasa_cuota': Decimal(traslado.get('TasaOCuota', '0')),
-                                'importe': Decimal(traslado.get('Importe', '0')),
+                                'base': Decimal(t_attrs.get('base', '0')),
+                                'impuesto': t_attrs.get('impuesto', ''),
+                                'tipo_factor': t_attrs.get('tipofactor', ''),
+                                'tasa_cuota': Decimal(t_attrs.get('tasaocuota', '0')),
+                                'importe': Decimal(t_attrs.get('importe', '0')),
                             })
                     
-                    retenciones_elem = impuestos_elem.find('cfdi:Retenciones', CFDI_NAMESPACES)
+                    retenciones_elem = impuestos_elem.find('{*}Retenciones')
                     if retenciones_elem is not None:
-                        for retencion in retenciones_elem.findall('cfdi:Retencion', CFDI_NAMESPACES):
+                        for retencion in retenciones_elem.findall('{*}Retencion'):
+                            rt_attrs = get_attrs(retencion)
                             retenciones.append({
-                                'base': Decimal(retencion.get('Base', '0')),
-                                'impuesto': retencion.get('Impuesto', ''),
-                                'tipo_factor': retencion.get('TipoFactor', ''),
-                                'tasa_cuota': Decimal(retencion.get('TasaOCuota', '0')),
-                                'importe': Decimal(retencion.get('Importe', '0')),
+                                'base': Decimal(rt_attrs.get('base', '0')),
+                                'impuesto': rt_attrs.get('impuesto', ''),
+                                'tipo_factor': rt_attrs.get('tipofactor', ''),
+                                'tasa_cuota': Decimal(rt_attrs.get('tasaocuota', '0')),
+                                'importe': Decimal(rt_attrs.get('importe', '0')),
                             })
                     
                     concepto_data['impuestos'] = {
@@ -147,11 +159,12 @@ def parse_cfdi_xml(xml_content: bytes) -> dict[str, Any]:
         data['conceptos'] = conceptos
         
         # Parse global Impuestos (Taxes)
-        impuestos_global = comprobante.find('cfdi:Impuestos', CFDI_NAMESPACES)
+        impuestos_global = comprobante.find('{*}Impuestos')
+        ig_attrs = get_attrs(impuestos_global)
         if impuestos_global is not None:
             data['impuestos'] = {
-                'total_impuestos_trasladados': Decimal(impuestos_global.get('TotalImpuestosTrasladados', '0')),
-                'total_impuestos_retenidos': Decimal(impuestos_global.get('TotalImpuestosRetenidos', '0')),
+                'total_impuestos_trasladados': Decimal(ig_attrs.get('totalimpuestostrasladados', '0')),
+                'total_impuestos_retenidos': Decimal(ig_attrs.get('totalimpuestosretenidos', '0')),
             }
         else:
             data['impuestos'] = {
@@ -160,18 +173,15 @@ def parse_cfdi_xml(xml_content: bytes) -> dict[str, Any]:
             }
         
         # Parse Complemento - TimbreFiscalDigital (UUID)
-        complemento = comprobante.find('cfdi:Complemento', CFDI_NAMESPACES)
-        if complemento is not None:
-            timbre = complemento.find('tfd:TimbreFiscalDigital', CFDI_NAMESPACES)
-            if timbre is not None:
-                data['timbre'] = {
-                    'uuid': timbre.get('UUID', ''),
-                    'fecha_timbrado': timbre.get('FechaTimbrado', ''),
-                    'rfc_prov_certif': timbre.get('RfcProvCertif', ''),
-                    'no_certificado_sat': timbre.get('NoCertificadoSAT', ''),
-                }
-            else:
-                data['timbre'] = {'uuid': ''}
+        timbre = comprobante.find('.//{*}TimbreFiscalDigital')
+        tf_attrs = get_attrs(timbre)
+        if timbre is not None:
+            data['timbre'] = {
+                'uuid': tf_attrs.get('uuid', ''),
+                'fecha_timbrado': tf_attrs.get('fechatimbrado', ''),
+                'rfc_prov_certif': tf_attrs.get('rfcprovcertif', ''),
+                'no_certificado_sat': tf_attrs.get('nocertificadosat', ''),
+            }
         else:
             data['timbre'] = {'uuid': ''}
         

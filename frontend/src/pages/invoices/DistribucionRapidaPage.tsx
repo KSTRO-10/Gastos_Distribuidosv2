@@ -44,10 +44,20 @@ export default function DistribucionRapidaPage() {
   const [budgetWarnings, setBudgetWarnings] = useState<BudgetWarning[]>([])
   const [pendingPayload, setPendingPayload] = useState<DistribucionData[] | null>(null)
 
-  // Load areas on mount
+  // Load areas and reset ALL states on mount
   useEffect(() => {
-    areaService.getAreas().then(setAreas).catch(console.error)
-  }, [])
+    if (typeof areaService !== 'undefined' && areaService.getAreas) {
+      areaService.getAreas().then(setAreas).catch(console.error);
+    }
+    
+    // Limpieza real y física obligatoria
+    if (typeof setUploadError === 'function') setUploadError('');
+    if (typeof setError === 'function') setError('');
+    if (typeof setXmlFile === 'function') setXmlFile(null);
+    if (typeof setPhase === 'function') setPhase('upload');
+
+    console.log('[AUDITORÍA] El componente de Distribución Rápida se ha montado y limpiado correctamente.');
+  }, []);
 
   // --- Drag & drop handlers ---
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -79,7 +89,11 @@ export default function DistribucionRapidaPage() {
 
   // --- Upload & process ---
   const handleUpload = async () => {
-    if (!xmlFile) return
+    // Cláusula de guarda estricta: No hacer nada si no hay archivo
+    if (!xmlFile || xmlFile.size === 0) {
+      return;
+    }
+    
     setUploading(true)
     setUploadError('')
 
@@ -290,9 +304,14 @@ export default function DistribucionRapidaPage() {
       {/* ===================== PHASE 1: UPLOAD ===================== */}
       {phase === 'upload' && (
         <div className="space-y-6">
-          {uploadError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
-              {uploadError}
+          {xmlFile && uploadError && uploadError.includes("UUID") && (
+            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md shadow-sm">
+              <div className="flex">
+                <svg className="h-5 w-5 text-red-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{uploadError}</span>
+              </div>
             </div>
           )}
 

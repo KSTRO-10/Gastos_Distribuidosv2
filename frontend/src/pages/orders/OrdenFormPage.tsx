@@ -201,10 +201,14 @@ export default function OrdenFormPage() {
                 label="Proveedor *"
                 error={errors.proveedor?.message}
                 placeholder="Seleccionar proveedor..."
-                options={proveedores.map(prov => ({ 
-                  value: prov.id, 
-                  label: prov.razon_social 
-                }))}
+                options={
+                  selectedCotizacion 
+                    ? [{ value: selectedCotizacion.proveedor, label: selectedCotizacion.proveedor_nombre }]
+                    : proveedores.map(prov => ({ 
+                        value: prov.id, 
+                        label: prov.razon_social 
+                      }))
+                }
                 disabled={!!selectedCotizacion}
                 {...register('proveedor', { required: 'El proveedor es requerido', valueAsNumber: true })}
               />

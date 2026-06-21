@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { facturacionService } from '@/services/facturacionService';
 import InvoiceMetrics from '@/components/invoices/InvoiceMetrics';
 import InvoiceStatusBadge from '@/components/invoices/InvoiceStatusBadge';
 import { Factura, FacturaStatus } from '@/types/facturacion';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function FacturacionDashboard() {
   useAuthStore();
@@ -12,13 +14,68 @@ export default function FacturacionDashboard() {
   const [recentInvoices, setRecentInvoices] = useState<Factura[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const isLoadingRef = useRef(false);
+
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    
+    // Titulo
+    doc.setFontSize(20);
+    doc.text('Reporte de Facturación', 14, 22);
+    
+    // Fecha
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Fecha de generación: ${new Date().toLocaleDateString('es-MX')}`, 14, 30);
+    
+    // Metricas
+    doc.setFontSize(14);
+    doc.setTextColor(0);
+    doc.text('Resumen de Estado', 14, 45);
+    
+    autoTable(doc, {
+      startY: 50,
+      head: [['Estado', 'Cantidad']],
+      body: [
+        ['Pendientes', metrics.pendientes],
+        ['Autorizadas', metrics.autorizadas],
+        ['Programadas', metrics.programadas],
+        ['Rechazadas', metrics.rechazadas],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [79, 70, 229] }
+    });
+    
+    // Facturas Recientes
+    doc.text('Facturas Recientes', 14, (doc as any).lastAutoTable.finalY + 15);
+    
+    const tableData = recentInvoices.map(f => [
+      f.folio || 'N/A',
+      f.proveedor_nombre || 'Sin proveedor',
+      `$${Number(f.total || 0).toFixed(2)}`,
+      f.status || FacturaStatus.PENDIENTE
+    ]);
+
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 20,
+      head: [['Folio', 'Proveedor', 'Total', 'Estado']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [79, 70, 229] }
+    });
+    
+    doc.save('reporte_facturacion.pdf');
+  };
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
   const fetchDashboardData = async () => {
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
+    setLoading(true);
     try {
-      setLoading(true);
       const data = await facturacionService.getFacturas({ limit: 10 });
       const facturas = Array.isArray(data) ? data : [];
       
@@ -35,6 +92,7 @@ export default function FacturacionDashboard() {
       // Fallback on error so the page doesn't break
       setRecentInvoices([]);
     } finally {
+      isLoadingRef.current = false;
       setLoading(false);
     }
   };
@@ -57,6 +115,12 @@ export default function FacturacionDashboard() {
           </h2>
         </div>
         <div className="mt-4 flex md:ml-4 md:mt-0">
+          <button
+            onClick={generatePDF}
+            className="ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-indigo-600 shadow-sm ring-1 ring-inset ring-indigo-300 hover:bg-gray-50"
+          >
+            Exportar PDF
+          </button>
           <Link
             to="/facturacion/nueva"
             className="ml-3 inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"

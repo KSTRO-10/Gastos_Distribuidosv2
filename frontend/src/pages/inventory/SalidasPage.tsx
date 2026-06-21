@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { inventoryService, SalidaBienes } from '../../services/inventoryService'
 import Button from '../../components/ui/Button'
@@ -15,7 +15,11 @@ export default function SalidasPage() {
     loadSalidas()
   }, [])
 
+  const isLoadingRef = React.useRef(false)
+
   const loadSalidas = async () => {
+    if (isLoadingRef.current) return
+    isLoadingRef.current = true
     try {
       setLoading(true)
       const data = await inventoryService.getSalidas()
@@ -24,6 +28,7 @@ export default function SalidasPage() {
       setError('Error al cargar las salidas')
       console.error(err)
     } finally {
+      isLoadingRef.current = false
       setLoading(false)
     }
   }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
@@ -50,20 +50,35 @@ export default function SolicitudesPage() {
   const isAdmin = user?.role === 'admin'
   const canCreateSolicitud = isArea || isAdmin
 
-  const loadData = async (estado?: string) => {
+  const loadData = async (estado?: string, controller?: AbortController) => {
     setLoading(true)
     try {
       const data = await procurementService.getSolicitudes(estado)
-      setSolicitudes(data)
-    } catch (error) {
-      toast.error('Error al cargar las solicitudes')
+      if (!controller || !controller.signal.aborted) {
+        setSolicitudes(data)
+      }
+    } catch (error: any) {
+      if (!controller || !controller.signal.aborted) {
+        if (error.name !== 'CanceledError' && error.code !== 'ERR_CANCELED') {
+          toast.dismiss('solicitudes-error')
+          toast.error('Error al cargar las solicitudes', { id: 'solicitudes-error' })
+          setSolicitudes([])
+        }
+      }
     } finally {
-      setLoading(false)
+      if (!controller || !controller.signal.aborted) {
+        setLoading(false)
+      }
     }
   }
 
   useEffect(() => {
-    loadData(filtroEstado)
+    const controller = new AbortController()
+    loadData(filtroEstado, controller)
+    return () => {
+      controller.abort()
+      toast.dismiss('solicitudes-error')
+    }
   }, [filtroEstado])
 
   const handleCreate = () => {

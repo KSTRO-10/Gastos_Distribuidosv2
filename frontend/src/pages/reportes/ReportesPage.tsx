@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import html2canvas from 'html2canvas'
 import { Card, Button, Select, LoadingOverlay, ProgressBar } from '@/components/ui'
 import { ExpenseBarChart, TrendLineChart, DistributionPieChart } from '@/components/charts/Charts'
 import { dashboardService, type GastosPorArea, type GastosMensuales } from '@/services/dashboardService'
@@ -23,6 +26,9 @@ const ReportesPage: React.FC = () => {
   const [selectedArea, setSelectedArea] = useState<string>('all')
   const [gastosPorArea, setGastosPorArea] = useState<GastosPorArea[]>([])
   const [gastosMensuales, setGastosMensuales] = useState<GastosMensuales[]>([])
+  const barChartRef = useRef<HTMLDivElement>(null)
+  const lineChartRef = useRef<HTMLDivElement>(null)
+  const [isExporting, setIsExporting] = useState(false)
 
   useEffect(() => {
     loadReportData()
@@ -77,9 +83,215 @@ const ReportesPage: React.FC = () => {
     document.body.removeChild(link)
   }
 
-  const handleExportPDF = () => {
-    // Por ahora solo abrimos ventana de impresión
-    window.print()
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true)
+      
+      // Asegurarnos de estar en modo gráficos para capturarlos
+      const prevViewMode = viewMode
+      if (viewMode !== 'charts') {
+        setViewMode('charts')
+        await new Promise(resolve => setTimeout(resolve, 300))
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4'
+      })
+
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      
+      // 1. ENCABEZADO
+      pdf.setFontSize(16)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(30, 41, 59)
+      pdf.text('REPORTE DE CONTROL DE GASTOS Y PRESUPUESTOS', pageWidth / 2, 40, { align: 'center' })
+      
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(100, 116, 139)
+      const fecha = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })
+      pdf.text(`Fecha de emisión: ${fecha}`, 40, 60)
+      
+      const lblArea = selectedArea === 'all' ? 'Todas las áreas' : selectedArea
+      pdf.text(`Área: ${lblArea}`, 40, 75)
+      
+      const lblPeriodo = periodOptions.find(p => p.value === selectedPeriod)?.label || selectedPeriod
+      pdf.text(`Período: ${lblPeriodo}`, pageWidth - 40, 60, { align: 'right' })
+
+      pdf.setDrawColor(226, 232, 240)
+      pdf.setLineWidth(1)
+      pdf.line(40, 85, pageWidth - 40, 85)
+
+      // 2. MÉTRICAS CLAVE
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(30, 41, 59)
+      pdf.text('Resumen Ejecutivo', 40, 110)
+
+      const metricsY = 125
+      const boxWidth = (pageWidth - 100) / 3
+      
+      // Total Gastado
+      pdf.setFillColor(239, 246, 255)
+      pdf.roundedRect(40, metricsY, boxWidth, 50, 4, 4, 'F')
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(37, 99, 235)
+      pdf.text('TOTAL GASTADO', 40 + boxWidth/2, metricsY + 20, { align: 'center' })
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(29, 78, 216)
+      pdf.text(formatCurrency(totalGastado), 40 + boxWidth/2, metricsY + 40, { align: 'center' })
+
+      // Presupuesto Total
+      pdf.setFillColor(236, 253, 245)
+      pdf.roundedRect(50 + boxWidth, metricsY, boxWidth, 50, 4, 4, 'F')
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(5, 150, 105)
+      pdf.text('PRESUPUESTO TOTAL', 50 + boxWidth + boxWidth/2, metricsY + 20, { align: 'center' })
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(4, 120, 87)
+      pdf.text(formatCurrency(totalPresupuesto), 50 + boxWidth + boxWidth/2, metricsY + 40, { align: 'center' })
+
+      // % Utilizado
+      pdf.setFillColor(250, 245, 255)
+      pdf.roundedRect(60 + boxWidth*2, metricsY, boxWidth, 50, 4, 4, 'F')
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(147, 51, 234)
+      pdf.text('% UTILIZADO', 60 + boxWidth*2 + boxWidth/2, metricsY + 20, { align: 'center' })
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(126, 34, 206)
+      pdf.text(`${porcentajeTotal.toFixed(1)}%`, 60 + boxWidth*2 + boxWidth/2, metricsY + 40, { align: 'center' })
+
+      let currentY = 210
+
+      // 3. TABLA: DESGLOSE POR ÁREA
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(30, 41, 59)
+      pdf.text('Desglose de Gastos por Área', 40, currentY)
+      
+      const areaBody = gastosPorArea.map(a => [
+        a.area,
+        formatCurrency(a.gastado),
+        formatCurrency(a.presupuesto),
+        formatCurrency(a.presupuesto - a.gastado),
+        `${a.porcentaje.toFixed(1)}%`
+      ])
+      
+      autoTable(pdf, {
+        startY: currentY + 15,
+        head: [['Área', 'Gastado', 'Presupuesto', 'Disponible', '% Utilizado']],
+        body: areaBody,
+        theme: 'striped',
+        headStyles: { fillColor: [51, 65, 85], textColor: 255, fontStyle: 'bold', fontSize: 10 },
+        styles: { fontSize: 9, cellPadding: 5, textColor: [51, 65, 85] },
+        columnStyles: {
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right' },
+          4: { halign: 'center', fontStyle: 'bold' }
+        },
+        margin: { left: 40, right: 40 },
+        didDrawPage: () => {
+          const str = 'Página ' + (pdf.internal as any).getNumberOfPages()
+          pdf.setFontSize(8)
+          pdf.setTextColor(150)
+          pdf.text(str, pageWidth - 40, pageHeight - 20, { align: 'right' })
+        }
+      })
+      
+      currentY = (pdf as any).lastAutoTable.finalY + 30
+
+      // 4. TABLA: DETALLE MENSUAL
+      if (currentY > pageHeight - 150) {
+        pdf.addPage()
+        currentY = 40
+      }
+
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(30, 41, 59)
+      pdf.text('Detalle Mensual de Ejecución', 40, currentY)
+
+      const mensualBody = gastosMensuales.map(m => {
+        const dif = m.presupuestado - m.gastado
+        return [
+          m.mes,
+          formatCurrency(m.gastado),
+          formatCurrency(m.presupuestado),
+          `${dif < 0 ? '-' : '+'}${formatCurrency(Math.abs(dif))}`,
+          dif < 0 ? 'Excedido' : 'En presupuesto'
+        ]
+      })
+
+      autoTable(pdf, {
+        startY: currentY + 15,
+        head: [['Mes', 'Gastado', 'Presupuestado', 'Diferencia', 'Estado']],
+        body: mensualBody,
+        theme: 'striped',
+        headStyles: { fillColor: [51, 65, 85], textColor: 255, fontStyle: 'bold', fontSize: 10 },
+        styles: { fontSize: 9, cellPadding: 5, textColor: [51, 65, 85] },
+        columnStyles: {
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right' },
+          4: { halign: 'center' }
+        },
+        margin: { left: 40, right: 40 }
+      })
+
+      currentY = (pdf as any).lastAutoTable.finalY + 30
+
+      // 5. GRÁFICOS
+      if (barChartRef.current && lineChartRef.current) {
+        if (currentY > pageHeight - 250) {
+          pdf.addPage()
+          currentY = 40
+        }
+
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(30, 41, 59)
+        pdf.text('Análisis Gráfico', 40, currentY)
+        currentY += 20
+
+        const canvasOptions = { scale: 2, backgroundColor: '#ffffff', logging: false }
+        
+        const canvasBar = await html2canvas(barChartRef.current, canvasOptions)
+        const imgBar = canvasBar.toDataURL('image/png')
+        const chartWidth = (pageWidth - 90) / 2
+        const chartHeight = (canvasBar.height * chartWidth) / canvasBar.width
+        
+        pdf.addImage(imgBar, 'PNG', 40, currentY, chartWidth, chartHeight)
+
+        const canvasLine = await html2canvas(lineChartRef.current, canvasOptions)
+        const imgLine = canvasLine.toDataURL('image/png')
+        const chartHeightL = (canvasLine.height * chartWidth) / canvasLine.width
+
+        pdf.addImage(imgLine, 'PNG', 50 + chartWidth, currentY, chartWidth, chartHeightL)
+      }
+
+      if (prevViewMode !== 'charts') {
+        setViewMode(prevViewMode)
+      }
+
+      const m = new Date().toLocaleString('es-MX', { month: 'long' })
+      pdf.save(`Reporte_Ejecutivo_Gastos_${m}.pdf`)
+    } catch (error) {
+      console.error('Error al generar PDF profesional:', error)
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   // Calcular totales
@@ -119,14 +331,14 @@ const ReportesPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-6 pb-8 relative">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reportes y Análisis</h1>
           <p className="text-gray-500 mt-1">Visualiza y exporta información detallada de gastos</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 print:hidden" data-html2canvas-ignore="true">
           <Button variant="outline" onClick={handleExportCSV}>
             <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
             Exportar CSV
@@ -139,8 +351,9 @@ const ReportesPage: React.FC = () => {
       </div>
 
       {/* Filtros */}
-      <Card className="bg-white" shadow="lg">
-        <div className="flex flex-wrap items-end gap-4">
+      <div data-html2canvas-ignore="true">
+        <Card className="bg-white print:hidden" shadow="lg">
+          <div className="flex flex-wrap items-end gap-4">
           <div className="flex items-center gap-2 text-gray-500 mr-4">
             <FunnelIcon className="w-5 h-5" />
             <span className="font-medium">Filtros</span>
@@ -195,6 +408,7 @@ const ReportesPage: React.FC = () => {
           </div>
         </div>
       </Card>
+      </div>
 
       {/* Resumen */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -242,13 +456,17 @@ const ReportesPage: React.FC = () => {
             <Card className="bg-white" shadow="lg">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Gastos vs Presupuesto</h3>
               <p className="text-sm text-gray-500 mb-4">Comparativa por área</p>
-              <ExpenseBarChart data={barChartData} height={320} />
+              <div ref={barChartRef} className="bg-white p-2">
+                <ExpenseBarChart data={barChartData} height={320} />
+              </div>
             </Card>
 
             <Card className="bg-white" shadow="lg">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Tendencia Histórica</h3>
               <p className="text-sm text-gray-500 mb-4">Evolución mensual de gastos</p>
-              <TrendLineChart data={gastosMensuales} height={320} />
+              <div ref={lineChartRef} className="bg-white p-2">
+                <TrendLineChart data={gastosMensuales} height={320} />
+              </div>
             </Card>
           </div>
 
@@ -447,6 +665,16 @@ const ReportesPage: React.FC = () => {
           </table>
         </div>
       </Card>
+
+      {isExporting && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900 bg-opacity-50" data-html2canvas-ignore="true">
+          <div className="bg-white p-6 rounded-lg shadow-xl flex flex-col items-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
+            <p className="text-gray-700 font-medium">Generando PDF de alta calidad...</p>
+            <p className="text-gray-500 text-sm mt-1">Por favor espera un momento</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

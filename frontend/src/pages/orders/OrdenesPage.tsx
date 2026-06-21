@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { 
@@ -28,21 +28,38 @@ export default function OrdenesPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>('todos')
   const [downloadingId, setDownloadingId] = useState<number | null>(null)
+  const isLoadingRef = React.useRef(false)
 
-  const loadData = async () => {
+  const loadData = async (controller?: AbortController) => {
+    if (isLoadingRef.current) return
+    isLoadingRef.current = true
     setLoading(true)
     try {
       const data = await orderService.getOrdenes()
-      setOrdenes(data)
-    } catch (error) {
-      toast.error('Error al cargar las órdenes de compra')
+      if (!controller || !controller.signal.aborted) {
+        setOrdenes(data)
+      }
+    } catch (error: any) {
+      if (!controller || !controller.signal.aborted) {
+        if (error.name !== 'CanceledError' && error.code !== 'ERR_CANCELED') {
+          toast.dismiss('ordenes-error')
+          toast.error('Error al cargar las órdenes de compra', { id: 'ordenes-error' })
+          setOrdenes([])
+        }
+      }
     } finally {
+      isLoadingRef.current = false
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    loadData()
+    const controller = new AbortController()
+    loadData(controller)
+    return () => {
+      controller.abort()
+      toast.dismiss('ordenes-error')
+    }
   }, [])
 
   const handleCreate = () => {

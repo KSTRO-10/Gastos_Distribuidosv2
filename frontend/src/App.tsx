@@ -43,6 +43,7 @@ import FacturaCreate from '@/pages/invoices/FacturaCreate.page'
 import FacturaDetail from '@/pages/invoices/FacturaDetail.page'
 import FacturaValidation from '@/pages/invoices/FacturaValidation.page'
 import ProgramacionPago from '@/pages/invoices/ProgramacionPago.page'
+import DistribucionRapidaPage from '@/pages/invoices/DistribucionRapidaPage'
 // Budget pages
 import PlantillasPage from '@/pages/budget/PlantillasPage'
 import PlantillaDetailPage from '@/pages/budget/PlantillaDetailPage'
@@ -359,6 +360,13 @@ function App() {
         <Route path="/facturacion/programacion-pago" element={
           <ProtectedRoute allowedRoles={['admin', 'tesoreria']}>
             <ProgramacionPago />
+          </ProtectedRoute>
+        } />
+
+        {/* Distribución Rápida (Antiguo flujo) */}
+        <Route path="/facturas/distribucion-rapida" element={
+          <ProtectedRoute allowedRoles={['admin', 'tesoreria']}>
+            <DistribucionRapidaPage />
           </ProtectedRoute>
         } />
 

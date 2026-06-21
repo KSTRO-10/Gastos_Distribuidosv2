@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { inventoryService, Stock } from '@/services/inventoryService'
 import { Card } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -10,14 +10,20 @@ export default function StockPage() {
   const [stock, setStock] = useState<Stock[]>([])
   const [loading, setLoading] = useState(true)
 
+  const isLoadingRef = React.useRef(false)
+
   const fetchStock = async () => {
+    if (isLoadingRef.current) return
+    isLoadingRef.current = true
+    setLoading(true)
     try {
-      setLoading(true)
       const data = await inventoryService.getStock()
       setStock(data)
     } catch (error: any) {
-      toast.error('Error al cargar el inventario: ' + (error.response?.data?.detail || error.message))
+      toast.error('Error al cargar el inventario: ' + (error.response?.data?.detail || error.message), { id: 'stock-error' })
+      setStock([])
     } finally {
+      isLoadingRef.current = false
       setLoading(false)
     }
   }

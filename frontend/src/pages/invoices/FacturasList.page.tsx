@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { facturacionService } from '@/services/facturacionService';
 import { Factura } from '@/types/facturacion';
@@ -14,14 +14,20 @@ export default function FacturasList() {
     fetchFacturas();
   }, []);
 
+  const isLoadingRef = React.useRef(false);
+
   const fetchFacturas = async (filters: any = {}) => {
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
+    setLoading(true);
     try {
-      setLoading(true);
       const data = await facturacionService.getFacturas(filters);
       setFacturas(data);
     } catch (error) {
       console.error('Error fetching facturas:', error);
+      setFacturas([]);
     } finally {
+      isLoadingRef.current = false;
       setLoading(false);
     }
   };
@@ -29,6 +35,8 @@ export default function FacturasList() {
   const handleFilterChange = (filters: any) => {
     fetchFacturas(filters);
   };
+
+  const safeFacturas = Array.isArray(facturas) ? facturas : (facturas as any)?.results || [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -71,9 +79,9 @@ export default function FacturasList() {
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {loading ? (
                     <tr><td colSpan={6} className="text-center py-4 text-gray-500">Cargando...</td></tr>
-                  ) : (!facturas || facturas.length === 0) ? (
+                  ) : safeFacturas.length === 0 ? (
                     <tr><td colSpan={6} className="text-center py-4 text-gray-500">No se encontraron facturas.</td></tr>
-                  ) : facturas?.map((factura) => (
+                  ) : safeFacturas.map((factura: any) => (
                     <tr key={factura?.id} className="hover:bg-gray-50">
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                         <div className="font-medium text-indigo-600">{factura?.folio || 'N/A'}</div>
